@@ -1,0 +1,1722 @@
+Container(
+    width: 440,
+    height: 4289,
+    clipBehavior: Clip.antiAlias,
+    decoration: BoxDecoration(color: const Color(0xFF1B1C1D)),
+    child: Stack(
+        children: [
+            Positioned(
+                left: 47,
+                top: 4023,
+                child: SizedBox(
+                    width: 296,
+                    height: 118,
+                    child: Text(
+                        'Ever Rose Fashion began with a simple goal of shopping system that truly works. Frustrated by gear that failed to deliver, I set out to design clothing that combines comfort, durability, and performance. Overcoming late nights and countless design challenges, the brand now proudly offers ethically made, high-performance activewear that empowers us to move with confidence and purpose.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w400,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 98,
+                top: 3970,
+                child: SizedBox(
+                    width: 204,
+                    height: 57,
+                    child: Text(
+                        'What Inspired Me',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 141,
+                top: 3788,
+                child: Container(
+                    width: 117,
+                    height: 161.22,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/117x161"),
+                            fit: BoxFit.contain,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 141,
+                top: 3949.22,
+                child: SizedBox(
+                    width: 117,
+                    height: 28,
+                    child: Text(
+                        'Elijah Rose - Founder',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 3154,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 3437.45,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 3711.27,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 3984.02,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 4159,
+                child: Container(
+                    width: 1440,
+                    height: 138,
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment(0.00, 0.50),
+                            end: Alignment(1.00, 0.50),
+                            colors: [const Color(0xFF2E2E2E), Colors.black],
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 294,
+                top: 4209,
+                child: SizedBox(
+                    width: 146,
+                    height: 31,
+                    child: Text(
+                        'Officialeverrosefashion',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 116,
+                top: 4208,
+                child: SizedBox(
+                    width: 168.71,
+                    height: 30.68,
+                    child: Text(
+                        'elijah@everrosefashion.com',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 21,
+                top: 4213,
+                child: SizedBox(
+                    width: 68,
+                    height: 14,
+                    child: Text(
+                        'elijah.rose25',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 15,
+                top: 4266,
+                child: SizedBox(
+                    width: 409,
+                    height: 20,
+                    child: Text(
+                        'Ever Rose Fashion 2025 - Designed & Developed By Elijah Rose',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w700,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 210,
+                top: 3237,
+                child: Container(
+                    width: 97.47,
+                    height: 129.96,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/97x130"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 98,
+                top: 3237,
+                child: Container(
+                    width: 102,
+                    height: 130,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/102x130"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 161,
+                top: 3099,
+                child: Container(
+                    width: 97.24,
+                    height: 132.17,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/97x132"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 103,
+                top: 3374,
+                child: Container(
+                    width: 97.24,
+                    height: 130.11,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/97x130"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 210,
+                top: 3374,
+                child: Container(
+                    width: 97,
+                    height: 130,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/97x130"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 36,
+                top: 3510,
+                child: Container(
+                    width: 328.70,
+                    height: 147.23,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/329x147"),
+                            fit: BoxFit.contain,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 44,
+                top: 3011,
+                child: SizedBox(
+                    width: 312,
+                    height: 88,
+                    child: Text(
+                        'Style Your Fit \nThe Way YOU Want',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 2087,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 2352,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 2608,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 2863,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 2769,
+                child: Container(
+                    width: 440,
+                    height: 226,
+                    decoration: BoxDecoration(color: const Color(0xFF595959)),
+                ),
+            ),
+            Positioned(
+                left: 34,
+                top: 2769,
+                child: SizedBox(
+                    width: 329,
+                    height: 42,
+                    child: Text(
+                        'Virtual Fitting Room',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 16,
+                top: 2303,
+                child: Container(
+                    width: 424,
+                    height: 466,
+                    decoration: BoxDecoration(color: const Color(0xFFD9D9D9)),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 2303,
+                child: Container(
+                    width: 440,
+                    height: 466,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/440x466"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 133,
+                top: 2839,
+                child: Container(
+                    width: 109,
+                    height: 109,
+                    decoration: BoxDecoration(color: const Color(0xFF595959)),
+                ),
+            ),
+            Positioned(
+                left: 132,
+                top: 2834,
+                child: Container(
+                    width: 114,
+                    height: 114,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/114x114"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 258,
+                top: 2834,
+                child: Container(
+                    width: 109,
+                    height: 109,
+                    decoration: BoxDecoration(color: const Color(0xFF595959)),
+                ),
+            ),
+            Positioned(
+                left: 258,
+                top: 2834,
+                child: Container(
+                    width: 113,
+                    height: 114,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/113x114"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 6,
+                top: 2839,
+                child: Container(
+                    width: 109,
+                    height: 109,
+                    decoration: BoxDecoration(color: const Color(0xFF595959)),
+                ),
+            ),
+            Positioned(
+                left: 6,
+                top: 2834,
+                child: Container(
+                    width: 113,
+                    height: 114,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/113x114"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 15,
+                top: 1190,
+                child: Container(
+                    width: 144.62,
+                    height: 193,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/145x193"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 15,
+                top: 1190,
+                child: Container(
+                    width: 144.62,
+                    height: 193,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/145x193"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 15,
+                top: 1350.41,
+                child: Container(
+                    width: 144.62,
+                    height: 32.59,
+                    decoration: BoxDecoration(color: const Color(0xF2202020)),
+                ),
+            ),
+            Positioned(
+                left: 31.30,
+                top: 1348.37,
+                child: SizedBox(
+                    width: 112.03,
+                    height: 18.33,
+                    child: Text(
+                        'Shop Men’s T shirts',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w700,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 31.30,
+                top: 1361.10,
+                child: SizedBox(
+                    width: 112.03,
+                    height: 18.33,
+                    child: Text(
+                        'Starting at \$24.99',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 192,
+                top: 1190,
+                child: Container(
+                    width: 145.49,
+                    height: 193,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/145x193"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 192,
+                top: 1190,
+                child: Container(
+                    width: 145.49,
+                    height: 193,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/145x193"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 192,
+                top: 1350.41,
+                child: Container(
+                    width: 146,
+                    height: 32.59,
+                    decoration: BoxDecoration(color: const Color(0xE5202020)),
+                ),
+            ),
+            Positioned(
+                left: 208.28,
+                top: 1348.37,
+                child: SizedBox(
+                    width: 111.92,
+                    height: 18.33,
+                    child: Text(
+                        'Shop Women’s T shirts',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w700,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 208.28,
+                top: 1361.10,
+                child: SizedBox(
+                    width: 111.92,
+                    height: 18.33,
+                    child: Text(
+                        'Starting at \$22.99',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 1059,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 1324,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 1580,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 1835,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 2234,
+                child: Container(
+                    width: 440,
+                    height: 69,
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment(0.00, 0.50),
+                            end: Alignment(1.00, 0.50),
+                            colors: [const Color(0xFF3E201E), const Color(0xFF343F3E), const Color(0xFF9A7B3F), const Color(0xFF4C5664), const Color(0xFFA9E6D1), const Color(0xFF9DE6EC), const Color(0xFFE6A230)],
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 5,
+                top: 2262,
+                child: Container(
+                    width: 19,
+                    height: 23,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(
+                        children: [
+                            Positioned(
+                                left: -11.40,
+                                top: -0.44,
+                                child: Container(
+                                    width: 16.93,
+                                    height: 21.67,
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: BoxDecoration(),
+                                ),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 16,
+                top: 2254,
+                child: SizedBox(
+                    width: 99.10,
+                    height: 39,
+                    child: Text(
+                        'Fast Shipping',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 131,
+                top: 2264,
+                child: SizedBox(
+                    width: 136,
+                    height: 16,
+                    child: Text(
+                        'Long-Lasting Durability',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 299,
+                top: 2260,
+                child: SizedBox(
+                    width: 103,
+                    height: 18,
+                    child: Text(
+                        'Ethical Production',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 277,
+                top: 2258,
+                child: Container(
+                    width: 22,
+                    height: 22,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(),
+                ),
+            ),
+            Positioned(
+                left: 108,
+                top: 2258,
+                child: Container(
+                    width: 32,
+                    height: 31,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(),
+                ),
+            ),
+            Positioned(
+                left: -6,
+                top: 3711,
+                child: Container(
+                    width: 446,
+                    height: 69,
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment(0.00, 0.50),
+                            end: Alignment(1.00, 0.50),
+                            colors: [const Color(0xFF3E201E), const Color(0xFF343F3E), const Color(0xFF9A7B3F), const Color(0xFF4C5664), const Color(0xFFA9E6D1), const Color(0xFF9DE6EC), const Color(0xFFE6A230)],
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: -1,
+                top: 3739,
+                child: Container(
+                    width: 18.85,
+                    height: 23,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(
+                        children: [
+                            Positioned(
+                                left: -11.31,
+                                top: -0.44,
+                                child: Container(
+                                    width: 16.79,
+                                    height: 21.67,
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: BoxDecoration(),
+                                ),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 9.91,
+                top: 3731,
+                child: SizedBox(
+                    width: 98.31,
+                    height: 39,
+                    child: Text(
+                        'Fast Shipping',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 124,
+                top: 3741,
+                child: SizedBox(
+                    width: 134.93,
+                    height: 16,
+                    child: Text(
+                        'Long-Lasting Durability',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 290.68,
+                top: 3737,
+                child: SizedBox(
+                    width: 102.19,
+                    height: 18,
+                    child: Text(
+                        'Ethical Production',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 268.85,
+                top: 3735,
+                child: Container(
+                    width: 21.83,
+                    height: 22,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(),
+                ),
+            ),
+            Positioned(
+                left: 102,
+                top: 3735,
+                child: Container(
+                    width: 32,
+                    height: 31,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 1101,
+                child: Container(
+                    width: 440,
+                    height: 61,
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment(0.00, 0.50),
+                            end: Alignment(1.00, 0.50),
+                            colors: [const Color(0xFF463B38), const Color(0xFF70767D)],
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 20,
+                top: 1121,
+                child: Container(
+                    width: 21,
+                    height: 19,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(),
+                ),
+            ),
+            Positioned(
+                left: 32,
+                top: 1109,
+                child: SizedBox(
+                    width: 110,
+                    height: 43,
+                    child: Text(
+                        'Organic Cotton',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 178,
+                top: 1101,
+                child: SizedBox(
+                    width: 103,
+                    height: 61.31,
+                    child: Text(
+                        'Premium Packaging',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 310,
+                top: 1101,
+                child: SizedBox(
+                    width: 109.91,
+                    height: 61.31,
+                    child: Text(
+                        'Ethical Production',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 295,
+                top: 1123,
+                child: Container(
+                    width: 18,
+                    height: 18,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                    child: Stack(),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: -9,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.black.withValues(alpha: 59),
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 256,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.black.withValues(alpha: 59),
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 512,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.black.withValues(alpha: 59),
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 402,
+                top: 767,
+                child: SizedBox(
+                    width: 406.14,
+                    height: 31,
+                    child: Transform(
+                        transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
+                        child: Text(
+                            '2025 Black Rose Collection',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.black.withValues(alpha: 59),
+                                fontSize: 20,
+                                fontFamily: 'GT Super Txt Trial',
+                                fontWeight: FontWeight.w400,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                    width: 439.28,
+                    height: 510.92,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/439x511"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 481.58,
+                child: Container(
+                    width: 440,
+                    height: 92.42,
+                    decoration: BoxDecoration(color: const Color(0xF2202020)),
+                ),
+            ),
+            Positioned(
+                left: 50.07,
+                top: 481.82,
+                child: SizedBox(
+                    width: 340.85,
+                    height: 51.99,
+                    child: Text(
+                        'The New Feburary \nBlack Rose Collection',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w700,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 49.45,
+                top: 526.16,
+                child: SizedBox(
+                    width: 341.11,
+                    height: 47.84,
+                    child: Text(
+                        'Shop Women’s Starting at \$22.99',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w400,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 574,
+                child: Container(
+                    width: 439,
+                    height: 527,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/439x527"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 0,
+                top: 1013.94,
+                child: Container(
+                    width: 439,
+                    height: 87.06,
+                    decoration: BoxDecoration(color: const Color(0xF2202020)),
+                ),
+            ),
+            Positioned(
+                left: 49.96,
+                top: 1014.17,
+                child: SizedBox(
+                    width: 340.07,
+                    height: 48.97,
+                    child: Text(
+                        'The New Feburary  \nBlack Rose Collection',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w700,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 49.33,
+                top: 1055.94,
+                child: SizedBox(
+                    width: 340.33,
+                    height: 45.06,
+                    child: Text(
+                        'Shop Men’s Starting at \$24.99',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 395,
+                top: 9,
+                child: Container(
+                    width: 43,
+                    height: 43,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(),
+                ),
+            ),
+            Positioned(
+                left: 192,
+                top: 1574.83,
+                child: Container(
+                    width: 146,
+                    height: 35.17,
+                    decoration: BoxDecoration(color: const Color(0xE5202020)),
+                ),
+            ),
+            Positioned(
+                left: 192,
+                top: 1416,
+                child: Container(
+                    width: 146,
+                    height: 158.68,
+                    decoration: BoxDecoration(color: const Color(0xFFD9D9D9)),
+                ),
+            ),
+            Positioned(
+                left: 192,
+                top: 1416,
+                child: Container(
+                    width: 146,
+                    height: 158.68,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/146x159"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 208.45,
+                top: 1572.63,
+                child: SizedBox(
+                    width: 113.10,
+                    height: 19.78,
+                    child: Text(
+                        'Shop Accessories',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w700,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 208.45,
+                top: 1586.37,
+                child: SizedBox(
+                    width: 113.10,
+                    height: 19.78,
+                    child: Text(
+                        'Starting at \$20.99',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 121,
+                top: 60,
+                child: Container(
+                    width: 198,
+                    height: 50,
+                    child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 4,
+                        children: [
+                            Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                spacing: 4,
+                                children: [
+                                    SizedBox(
+                                        width: 363,
+                                        height: 32,
+                                        child: Text(
+                                            'Ever Rose Fashion',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 24,
+                                                fontFamily: 'GT Super Ds Trial',
+                                                fontWeight: FontWeight.w700,
+                                            ),
+                                        ),
+                                    ),
+                                    SizedBox(
+                                        width: 363,
+                                        height: 14,
+                                        child: Text(
+                                            'By Elijah Rose',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontFamily: 'GT Super Ds Trial',
+                                                fontWeight: FontWeight.w400,
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 94.95,
+                top: 1416,
+                child: Container(
+                    width: 72.05,
+                    height: 158.68,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/72x159"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 21,
+                top: 1416,
+                child: Container(
+                    width: 73.95,
+                    height: 158.68,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/74x159"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 21,
+                top: 1574.83,
+                child: Container(
+                    width: 146,
+                    height: 35.17,
+                    decoration: BoxDecoration(color: const Color(0xE5202020)),
+                ),
+            ),
+            Positioned(
+                left: 37.45,
+                top: 1572.63,
+                child: SizedBox(
+                    width: 113.10,
+                    height: 19.78,
+                    child: Text(
+                        'Shop Unisex',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w700,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 37.45,
+                top: 1586.37,
+                child: SizedBox(
+                    width: 113.10,
+                    height: 19.78,
+                    child: Text(
+                        'Starting at \$23.99',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 16,
+                top: 1809,
+                child: Container(
+                    width: 357,
+                    height: 72,
+                    decoration: BoxDecoration(color: Colors.white),
+                ),
+            ),
+            Positioned(
+                left: -7.65,
+                top: 1729.92,
+                child: Container(
+                    width: 436.96,
+                    height: 399.09,
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 153),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 21.71,
+                top: 1826.14,
+                child: SizedBox(
+                    width: 302.74,
+                    height: 43.20,
+                    child: Text(
+                        'Shop Mia’s Inspired Collection',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 156,
+                top: 1623,
+                child: SizedBox(
+                    width: 161.85,
+                    height: 47.90,
+                    child: Text(
+                        'How Ever Rose Fashion Changed My Game',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 159,
+                top: 1671,
+                child: SizedBox(
+                    width: 147,
+                    height: 95,
+                    child: Text(
+                        '"Ever Rose's sports bras provide a unmatched support and comfort during my toughest matches, letting me focus 100% on my performance. ',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 21,
+                top: 1634,
+                child: Container(
+                    width: 131.62,
+                    height: 132,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/132x132"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 21,
+                top: 1766,
+                child: SizedBox(
+                    width: 132,
+                    height: 18,
+                    child: Text(
+                        'Mia Carter - 2026 Olympic Tennis Player',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 7,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 16,
+                top: 2127,
+                child: Container(
+                    width: 357.14,
+                    height: 72,
+                    decoration: BoxDecoration(color: Colors.white),
+                ),
+            ),
+            Positioned(
+                left: -16,
+                top: 2092.71,
+                child: Container(
+                    width: 393.71,
+                    height: 362.06,
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 145),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 19,
+                top: 2141,
+                child: SizedBox(
+                    width: 302.85,
+                    height: 43.20,
+                    child: Text(
+                        'Shop Steele’s Inspired Collection',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 197,
+                top: 1924,
+                child: SizedBox(
+                    width: 151,
+                    height: 29,
+                    child: Text(
+                        'Gear That Thrives on Every Flip!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 207,
+                top: 1953,
+                child: SizedBox(
+                    width: 125,
+                    height: 111,
+                    child: Text(
+                        '"Ever Rose brings the heat! Their sports bras handle every grind, flip, and wipeout we throw at them. “',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 23,
+                top: 2047.15,
+                child: SizedBox(
+                    width: 168.51,
+                    height: 9.85,
+                    child: Text(
+                        'Ryder & Jax Steele - Pro Skateboarders',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 7,
+                            fontFamily: 'GT Super Txt Trial',
+                            fontWeight: FontWeight.w300,
+                        ),
+                    ),
+                ),
+            ),
+            Positioned(
+                left: 23,
+                top: 1926.79,
+                child: Container(
+                    width: 168.51,
+                    height: 120.36,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage("https://placehold.co/169x120"),
+                            fit: BoxFit.cover,
+                        ),
+                    ),
+                ),
+            ),
+        ],
+    ),
+)
