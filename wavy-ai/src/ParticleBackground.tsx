@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 
-// Simple particle animation using canvas
-export default function ParticleBackground() {
+interface ParticleBackgroundProps {
+  isSpeaking: boolean;
+}
+
+export default function ParticleBackground({ isSpeaking }: ParticleBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
 
@@ -26,8 +29,8 @@ export default function ParticleBackground() {
       if (!ctx) return;
       ctx.clearRect(0, 0, w, h);
       for (const p of particles) {
-        p.x += p.dx;
-        p.y += p.dy;
+        p.x += p.dx * (isSpeaking ? 2 : 1);
+        p.y += p.dy * (isSpeaking ? 2 : 1);
         if (p.x < 0 || p.x > w) p.dx *= -1;
         if (p.y < 0 || p.y > h) p.dy *= -1;
         ctx.beginPath();
@@ -38,7 +41,7 @@ export default function ParticleBackground() {
       animationRef.current = requestAnimationFrame(animate);
     }
     animate();
-  }, []);
+  }, [isSpeaking]);
 
   useEffect(() => {
     drawParticles();
