@@ -1,56 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-// TTSHighlight component: highlights the word currently being spoken
-function TTSHighlight({ text }: { text: string }) {
-  const [currentWordIdx, setCurrentWordIdx] = useState(0);
-  const words = text ? text.split(/\s+/) : [];
-
-  useEffect(() => {
-    if (!text) return;
-    setCurrentWordIdx(0);
-    let idx = 0;
-    const interval = setInterval(() => {
-      setCurrentWordIdx(idx);
-      idx++;
-      if (idx === words.length) {
-        clearInterval(interval);
-        // Keep last word highlighted for 300ms
-        setTimeout(() => {
-          setCurrentWordIdx(words.length - 1);
-        }, 300);
-      }
-    }, 40);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [text]);
-
-  return (
-    <span>
-      {words.map((word, i) => (
-        <span key={i} style={i === currentWordIdx ? { background: 'rgba(79,140,255,0.18)', color: '#4f8cff', borderRadius: 4, padding: '0 2px', transition: 'background 0.2s' } : {}}>
-          {word + (i < words.length - 1 ? ' ' : '')}
-        </span>
-      ))}
-    </span>
-  );
-}
-// TTSHighlight component: highlights the word currently being spoken
-// ✅ App.tsx
-// PDF parsing (pdfjs)
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-// Use a same-origin worker served from the app's `public/` folder to avoid
-// CORS and dynamic import issues. The worker file will be committed to the
-// `public/pdf.worker.min.js` path on the `pdf-worker-local` branch.
-// @ts-ignore
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Import the worker as a URL so the bundled worker matches the installed pdfjs-dist version (Vite-friendly)
+// The `?url` suffix tells Vite to return the file URL instead of bundling its contents.
+// the package provides .mjs worker files; import the existing file with .mjs extension so Vite can resolve it
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import './App.css';
 import { askOpenAIAgent } from './agents';
 import ParticleBackground from './ParticleBackground';
+import QuickActions from './components/QuickActions';
+import ChatBubble, { StreamingBubble } from './components/ChatBubble';
+import VoiceSpectrum from './components/VoiceSpectrum';
+import { JobResult } from './utils/jobSearchUtils';
+
+declare global {
+  interface Window {
+    mammoth?: any;
+  }
+}
+
+// Use the worker URL from the installed package to avoid version mismatch with any public worker file
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  meta?: { structured?: boolean };
 }
 
 function App() {
@@ -58,365 +32,498 @@ function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [partialReply, setPartialReply] = useState('');
-  const [userName, setUserName] = useState<string | null>(null);
-  const [hasGreeted, setHasGreeted] = useState(false);
-  const [voiceMode] = useState(true);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const voiceModeRef = useRef(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(true); // TTS enabled by default
+  const [isListening, setIsListening] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewFile, setPreviewFile] = useState<{ name: string, type: string, url: string } | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const chatWindowRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
 
-  // Track whether user is near the bottom of the chat window so we don't force-scroll
-  const handleScroll = () => {
-    const el = chatWindowRef.current;
-    if (!el) return;
-    const threshold = 120; // px from bottom considered "at bottom"
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    setIsAtBottom(atBottom);
+  const promptSuggestions = {
+    'Review Resume': [
+      'Yo, can you peep my resume and drop some fire tips?',
+      'What resume mistakes are a total vibe killer?',
+      'How do I make my resume hit different for a specific job?',
+    ],
+    'Job Search Tips': [
+      'What are the go-to moves for landing a job fast?',
+      'How do I network like a pro without it being cringe?',
+      'Which apps or sites are lowkey the best for job hunting?',
+    ],
+    'Resume Formatting': [
+      'How do I format my resume so it doesn’t get ghosted by bots?',
+      'What layout makes my wins pop for hiring managers?',
+      'How long should my resume be before it’s doing too much?',
+    ],
+    'Interview Questions': [
+      'What interview questions are always trending?',
+      'How do I prep for a tech interview without stressing?',
+      'What are some clutch questions to ask the interviewer?',
+    ],
   };
 
-  const safeScrollToEnd = (opts: ScrollIntoViewOptions = { behavior: 'smooth' }) => {
-    if (isAtBottom) {
-      chatEndRef.current?.scrollIntoView(opts);
-    }
-  };
+  // --- Phase 3: Job Search State ---
+  const [jobResults] = useState<JobResult[]>([]);
+  const [jobSearchError] = useState<string | null>(null);
+  // Removed unused jobSearchLoading state
 
-  // Auto-scroll to latest message when messages change but only if user is at/near bottom
-  useEffect(() => {
-  safeScrollToEnd();
-  }, [messages, loading, partialReply, isAtBottom]);
+  // Example resume text (replace with actual resume parsing later)
 
-  // Initialize scroll state and update on resize or when messages change
+  // (Removed unused handleJobSearch function)
+
   useEffect(() => {
-    handleScroll();
-    window.addEventListener('resize', handleScroll);
-    return () => window.removeEventListener('resize', handleScroll);
-  }, [messages.length]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, partialReply]);
+
+  // Keep voiceModeRef in sync with voiceMode
+  useEffect(() => {
+    voiceModeRef.current = voiceMode;
+  }, [voiceMode]);
 
   const sendMessage = async (text?: string) => {
-    let messageToSend = text ?? input;
-    if (!messageToSend.trim()) return;
+    const messageToSend = (text || input).trim();
+    if (!messageToSend) return;
 
-    // Only prepend name if not greeted yet
-    if (userName && !hasGreeted) {
-      messageToSend = `My name is ${userName}. ${messageToSend}`;
-    }
+    console.log('sendMessage called. voiceMode:', voiceMode, 'messageToSend:', messageToSend);
 
-    setMessages((prev) => [...prev, { role: 'user', content: text ?? input }]);
+    setActiveAction(null);
+    setMessages((prev: Message[]) => [...prev, { role: 'user', content: messageToSend }]);
     setInput('');
     setLoading(true);
     setPartialReply('');
 
     try {
       const fullReply = await askOpenAIAgent(messageToSend, (partial) => {
-  setPartialReply(partial);
-  safeScrollToEnd();
+        // Only show partial reply if NOT in voice mode to avoid duplicates
+        if (!voiceModeRef.current) {
+          setPartialReply(partial);
+        }
       });
-      setMessages((prev) => [...prev, { role: 'assistant', content: fullReply }]);
-      setPartialReply('');
-
-      // Try to extract user's name from the agent's reply if it asks for it
-      if (!userName) {
-        const match = fullReply.match(/Nice to meet you, (\w+)/i) || fullReply.match(/your name is (\w+)/i);
-        if (match && match[1]) {
-          setUserName(match[1]);
-          setHasGreeted(true);
-        } else {
-          const userMatch = (text ?? input).match(/my name is (\w+)/i);
-          if (userMatch && userMatch[1]) {
-            setUserName(userMatch[1]);
-            setHasGreeted(true);
-          }
-        }
-      } else if (!hasGreeted && fullReply.toLowerCase().includes(userName.toLowerCase())) {
-        setHasGreeted(true);
+      
+      console.log('Got AI response, fullReply length:', fullReply.length);
+      
+      // Add the assistant's response to messages
+      setMessages((prev: Message[]) => [...prev, { role: 'assistant', content: fullReply }]);
+      
+      // Determine if we should speak the response
+      const shouldSpeak = voiceModeRef.current || ttsEnabled;
+      console.log('shouldSpeak:', shouldSpeak, 'voiceModeRef:', voiceModeRef.current, 'ttsEnabled:', ttsEnabled);
+      
+      if (shouldSpeak) {
+        console.log('About to call speakText...');
+        await speakText(fullReply);
+        console.log('speakText completed');
       }
-
-      // Use OpenAI TTS for assistant reply
-      try {
-        const apiKey = import.meta.env.VITE_OPENAI_API_KEY || (window as any).OPENAI_API_KEY;
-        if (!apiKey) throw new Error('OpenAI API key not found');
-        const ttsResponse = await fetch('https://api.openai.com/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'tts-1',
-            input: fullReply,
-            voice: 'alloy',
-          }),
-        });
-        if (!ttsResponse.ok) throw new Error('TTS request failed');
-        const audioBlob = await ttsResponse.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.play();
-      } catch (ttsErr) {
-        if ('speechSynthesis' in window) {
-          const utter = new window.SpeechSynthesisUtterance(fullReply);
-          utter.lang = 'en-US';
-          window.speechSynthesis.speak(utter);
-        }
+      
+      // If in S2S mode, automatically start listening again after response
+      if (voiceModeRef.current) {
+        console.log('S2S mode active, scheduling next listening session...');
+        // Small delay to ensure audio cleanup and give user a moment to respond
+        setTimeout(() => {
+          console.log('Timeout executed. voiceModeRef:', voiceModeRef.current, 'isListening:', isListening, 'isSpeaking:', isSpeaking);
+          // Double-check we're still in voice mode and not currently busy
+          if (voiceModeRef.current && !isListening && !isSpeaking) {
+            console.log('Starting listening for next user input...');
+            startListening();
+          } else {
+            console.log('Cannot start listening - conditions not met');
+          }
+        }, 1000); // Slightly longer delay for better audio separation
+      } else {
+        console.log('Not in S2S mode, skipping continuous listening');
       }
     } catch (err) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Error: ' + (err as Error).message }]);
-      setPartialReply('');
+      setMessages((prev: Message[]) => [...prev, { role: 'assistant', content: 'Error: ' + (err as Error).message }]);
     } finally {
       setLoading(false);
-      setTimeout(() => {
-        safeScrollToEnd();
-      }, 100);
+      setPartialReply('');
     }
   };
 
-  // Voice recognition logic
+  // Speak text using OpenAI's TTS API with Alloy voice
+  const speakText = async (text: string) => {
+    try {
+      // Stop any ongoing speech and listening
+      stopSpeaking();
+      setIsListening(false);
+      setIsSpeaking(true);
+      
+      const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'tts-1',
+          voice: 'alloy',
+          input: text,
+          speed: 1.0
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI TTS API error: ${response.statusText}`);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      
+      // Return a promise that resolves when audio finishes
+      return new Promise<void>((resolve, reject) => {
+        audio.onended = () => {
+          console.log('OpenAI TTS audio finished playing');
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+          audioRef.current = null;
+          resolve();
+        };
+        
+        audio.onerror = () => {
+          console.log('OpenAI TTS audio error');
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+          audioRef.current = null;
+          reject(new Error('Audio playback error'));
+        };
+        
+        audio.play().then(() => {
+          console.log('OpenAI TTS audio started playing');
+        }).catch((err) => {
+          console.log('OpenAI TTS audio play error:', err);
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+          audioRef.current = null;
+          reject(err);
+        });
+      });
+      
+    } catch (e) {
+      console.error('OpenAI TTS error:', e);
+      setIsSpeaking(false);
+      // Fallback to browser speech synthesis
+      return fallbackSpeech(text);
+    }
+  };
+
+  // Stop any ongoing speech
+  const stopSpeaking = () => {
+    // Stop OpenAI audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    
+    // Stop browser speech synthesis
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    
+    setIsSpeaking(false);
+  };
+
+  // Fallback to browser speech synthesis if OpenAI TTS fails
+  const fallbackSpeech = (text: string): Promise<void> => {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported in this browser.');
+      setIsSpeaking(false);
+      return Promise.resolve();
+    }
+    
+    return new Promise<void>((resolve) => {
+      try {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        utter.rate = 0.9;
+        utter.pitch = 1.0;
+        
+        utter.onstart = () => setIsSpeaking(true);
+        utter.onend = () => {
+          setIsSpeaking(false);
+          resolve();
+        };
+        utter.onerror = () => {
+          setIsSpeaking(false);
+          resolve();
+        };
+        
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        console.error('Fallback TTS error', e);
+        setIsSpeaking(false);
+        resolve();
+      }
+    });
+  };
+
   const startListening = () => {
-    if (!voiceMode) return;
+    console.log('startListening called. isSpeaking:', isSpeaking, 'isListening:', isListening);
+    
+    // Don't start listening if already speaking or listening
+    if (isSpeaking || isListening) {
+      console.log('Cannot start listening: already speaking or listening');
+      return;
+    }
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert('Speech recognition not supported in this browser.');
       return;
     }
+    
+    console.log('Initializing speech recognition...');
+    
+    // Stop any ongoing speech before starting to listen
+    stopSpeaking();
+    
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
+    recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = (event: any) => {
+    
+    setIsListening(true);
+    console.log('Speech recognition started, listening for input...');
+    
+    recognition.onresult = async (event: any) => {
       const transcript = event.results[0][0].transcript;
-      sendMessage(transcript);
+      console.log('Voice recognition result received. transcript:', transcript, 'current voiceModeRef:', voiceModeRef.current);
+      setIsListening(false);
+      
+      // Additional check: don't process if we're currently speaking
+      if (isSpeaking) {
+        console.log('Ignoring voice input while speaking');
+        return;
+      }
+      
+      // Send the transcribed message (TTS will happen automatically in sendMessage)
+      await sendMessage(transcript);
     };
+    
     recognition.onerror = (event: any) => {
-      alert('Voice recognition error: ' + event.error);
+      console.error('Voice recognition error:', event.error);
+      setIsListening(false);
+      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        alert('Voice recognition error: ' + event.error);
+      }
     };
+    
+    recognition.onend = () => setIsListening(false);
     recognition.start();
   };
 
-  // File upload handler (simple, safe): supports text files. PDFs are rejected with a message.
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputEl = e.target as HTMLInputElement;
-    const file = inputEl.files?.[0];
-    if (!file) {
-      // ensure value is cleared so the user can re-open the picker reliably
-      inputEl.value = '';
-      return;
-    }
-    // clear the input value early so re-uploading the same file is possible
-    inputEl.value = '';
-  const lowerName = file.name.toLowerCase();
-  if (file.type === 'application/pdf' || lowerName.endsWith('.pdf')) {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) setPreviewFile({ name: file.name, type: file.type, url: URL.createObjectURL(file) });
+  };
+
+  const processPreviewFile = async () => {
+    if (!previewFile) return;
+    const { type, url, name } = previewFile;
+    setPreviewFile(null);
+    setUploadStatus(`Analyzing ${name}...`);
+    let parsedText = '';
+
+    try {
+      if (type === 'application/pdf') {
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          parsedText += content.items.map((item: any) => item.str).join(' ');
+        }
+      } else if (type.includes('wordprocessingml') && window.mammoth) {
+        const res = await fetch(url);
+        const arrayBuffer = await res.arrayBuffer();
+        const result = await window.mammoth.convertToHtml({ arrayBuffer });
+        parsedText = result.value.replace(/<[^>]+>/g, ' ');
+      } else if (type.startsWith('text/')) {
+        parsedText = await (await fetch(url)).text();
+      } else {
+        throw new Error('Unsupported file type.');
+      }
+
+      const agentPrompt = `Please provide a professional review of the following resume. Format the response with these sections: **Summary**, **Strengths**, **Areas for Improvement**, and **Suggestions**.\n\nResume:\n${parsedText}`;
       setLoading(true);
+      const fullReply = await askOpenAIAgent(agentPrompt, setPartialReply);
+      setMessages((prev: Message[]) => [...prev, { role: 'assistant', content: fullReply, meta: { structured: true } }]);
+    } catch (err) {
+      setMessages((prev: Message[]) => [...prev, { role: 'assistant', content: 'Error processing file: ' + (err as Error).message }]);
+    } finally {
+      setLoading(false);
       setPartialReply('');
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const typedArray = new Uint8Array(event.target?.result as ArrayBuffer);
-        try {
-          const pdf = await pdfjsLib.getDocument(typedArray).promise;
-          let text = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            text += content.items.map((item: any) => item.str).join(' ') + '\n';
-          }
-          setMessages((prev) => [...prev, { role: 'user', content: `PDF uploaded: ${file.name}\n${text}` }]);
-          try {
-            const fullReply = await askOpenAIAgent(`Read and analyze this PDF resume: ${file.name}\n${text}`, (partial) => {
-              setPartialReply(partial);
-              safeScrollToEnd();
-            });
-            setMessages((prev) => [...prev, { role: 'assistant', content: fullReply }]);
-            setPartialReply('');
-          } catch (err) {
-            setMessages((prev) => [...prev, { role: 'assistant', content: 'Error reading PDF file.' }]);
-          }
-        } catch (pdfErr) {
-          const msg = pdfErr instanceof Error ? pdfErr.message : String(pdfErr);
-          setMessages((prev) => [...prev, { role: 'assistant', content: `Failed to parse PDF: ${msg}` }]);
-        }
-        setLoading(false);
-      };
-      reader.readAsArrayBuffer(file);
-    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || lowerName.endsWith('.docx')) {
-      // DOCX — use mammoth in the browser to extract raw text
-      setLoading(true);
-      setPartialReply('');
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const mammothMod: any = await import('mammoth');
-          const arrayBuffer = event.target?.result as ArrayBuffer;
-          const result = await mammothMod.convertToHtml({ arrayBuffer });
-          // naive strip of HTML to get plain text
-          const text = (result?.value ?? '').replace(/<[^>]+>/g, ' ');
-          setMessages((prev) => [...prev, { role: 'user', content: `DOCX uploaded: ${file.name}\n${text}` }]);
-          try {
-            const fullReply = await askOpenAIAgent(`Read and analyze this DOCX resume: ${file.name}\n${text}`, (partial) => {
-              setPartialReply(partial);
-              safeScrollToEnd();
-            });
-            setMessages((prev) => [...prev, { role: 'assistant', content: fullReply }]);
-            setPartialReply('');
-          } catch (err) {
-            setMessages((prev) => [...prev, { role: 'assistant', content: 'Error reading DOCX file.' }]);
-          }
-        } catch (docxErr) {
-          setMessages((prev) => [...prev, { role: 'assistant', content: 'Failed to parse DOCX. Please upload a plain text or PDF file.' }]);
-        }
-        setLoading(false);
-      };
-      reader.readAsArrayBuffer(file);
-    } else if (file.type.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.tiff', '.bmp'].some(ext => lowerName.endsWith(ext))) {
-      // Image — attempt OCR in-browser using tesseract.js
-      setLoading(true);
-      setPartialReply('');
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          let tesseractMod: any;
-          try {
-            tesseractMod = await import('tesseract.js');
-          } catch (importErr) {
-            setMessages((prev) => [...prev, { role: 'assistant', content: 'Failed to load OCR engine.' }]);
-            setLoading(false);
-            return;
-          }
-          const imageData = event.target?.result as string;
-          const { data } = await tesseractMod.recognize(imageData, 'eng');
-          setMessages((prev) => [...prev, { role: 'user', content: `Image uploaded: ${file.name}\n${data.text}` }]);
-          try {
-            const fullReply = await askOpenAIAgent(`Read and analyze this image resume: ${file.name}\n${data.text}`, (partial) => {
-              setPartialReply(partial);
-              safeScrollToEnd();
-            });
-            setMessages((prev) => [...prev, { role: 'assistant', content: fullReply }]);
-            setPartialReply('');
-          } catch (err) {
-            setMessages((prev) => [...prev, { role: 'assistant', content: 'Error reading image file.' }]);
-          }
-        } catch (ocrErr) {
-          setMessages((prev) => [...prev, { role: 'assistant', content: 'Failed to parse image.' }]);
-        }
-        setLoading(false);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const fileContent = event.target?.result;
-        if (typeof fileContent === 'string') {
-          setMessages((prev) => [...prev, { role: 'user', content: `File uploaded: ${file.name}\n${fileContent}` }]);
-          setLoading(true);
-          setPartialReply('');
-          try {
-            const fullReply = await askOpenAIAgent(`Read and analyze this file: ${file.name}\n${fileContent}`, (partial) => {
-              setPartialReply(partial);
-              safeScrollToEnd();
-            });
-            setMessages((prev) => [...prev, { role: 'assistant', content: fullReply }]);
-            setPartialReply('');
-          } catch (err) {
-            setMessages((prev) => [...prev, { role: 'assistant', content: 'Error reading file.' }]);
-          }
-          setLoading(false);
-        }
-      };
-      reader.readAsText(file);
+      setUploadStatus(null);
     }
   };
 
+  // Fetch jobs from backend (Glassdoor API)
+
   return (
-    <div className="gpt-root">
-      <ParticleBackground isSpeaking={false} />
-      <div className="gpt-main gpt-centered" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', marginTop: '8vh', marginBottom: '0', position: 'relative' }}>
-        <div className="gpt-header gpt-centered-header" style={{ marginBottom: '32px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '3rem', fontWeight: 700, color: '#f3f3f3', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>Everon</h1>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.5rem' }}>Your Ai Career Coach</h2>
-          <p className="gpt-subtext" style={{ fontSize: '1.12rem', color: '#bdbdbd', marginBottom: '1.2rem' }}>Ask Everon about your career questions!</p>
+    <div className="app-container">
+      {previewFile && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Preview: {previewFile.name}</h3>
+            {previewFile.type.startsWith('image/') ? <img src={previewFile.url} alt="preview" /> : <iframe src={previewFile.url} title="preview" />}
+            <div className="modal-actions">
+              <button onClick={() => setPreviewFile(null)}>Cancel</button>
+              <button onClick={processPreviewFile}>Confirm & Upload</button>
+            </div>
+          </div>
         </div>
-  <div ref={chatWindowRef} onScroll={handleScroll} className="gpt-chat-window" style={{ marginBottom: '0', width: '100%' }}>
-          {messages.map((msg, idx) => (
-            <div key={idx} className={`gpt-message gpt-message-${msg.role}`}
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                alignItems: 'flex-end',
-                marginBottom: 10,
-                width: '100%',
-                paddingLeft: msg.role === 'user' ? '20%' : '5%',
-                paddingRight: msg.role === 'user' ? '5%' : '20%',
-              }}>
-              <div
-                className={msg.role === 'assistant' ? 'gpt-bubble gpt-bubble-assistant glass-card' : 'gpt-bubble gpt-bubble-user glass-bubble'}
-                style={{
-                  alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                  marginLeft: msg.role === 'user' ? 'auto' : 0,
-                  marginRight: msg.role === 'assistant' ? 'auto' : 0,
-                  maxWidth: '500px',
-                  minWidth: '120px',
-                  padding: '1rem 1.5rem',
-                  wordBreak: 'break-word',
-                  background: msg.role === 'user'
-                    ? 'linear-gradient(135deg, rgba(79,140,255,0.92) 0%, rgba(44,62,80,0.88) 100%)'
-                    : 'linear-gradient(135deg, rgba(34,193,195,0.92) 0%, rgba(30,39,46,0.88) 100%)',
-                  boxShadow: '0 4px 24px 0 rgba(0,0,0,0.18)',
-                  backdropFilter: 'blur(12px) saturate(1.2)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '2rem',
-                }}
-              >
-                <div className={msg.role === 'assistant' ? 'gpt-assistant-content' : ''}>{msg.content}</div>
-              </div>
-            </div>
-          ))}
-          {loading && partialReply && (
-            <div className="gpt-message gpt-message-assistant" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-end', width: '100%' }}>
-              <div className="gpt-bubble gpt-bubble-assistant glass-card" style={{ maxWidth: '70%' }}>
-                <div className="gpt-assistant-content">
-                  <TTSHighlight text={partialReply} />
-                  <span className="gpt-cursor">|</span>
-                </div>
-              </div>
-            </div>
+      )}
+
+  <ParticleBackground isSpeaking={isSpeaking} />
+      <main className="main-content">
+        <header className="app-header">
+          <h1>Everon</h1>
+          <h2>Your AI Career Coach</h2>
+          {voiceMode ? (
+            <p className="voice-mode-indicator">🔄 Continuous Voice Mode Active - Speak naturally!</p>
+          ) : (
+            <p>Ask Everon about your career questions!</p>
           )}
+        </header>
+
+        <QuickActions 
+          promptSuggestions={promptSuggestions}
+          activeAction={activeAction}
+          setActiveAction={setActiveAction}
+          setInput={setInput}
+        />
+
+        <div className="chat-window">
+          {uploadStatus && <div className="upload-status">{uploadStatus}</div>}
+          {messages.map((msg: Message, idx: number) => (
+            <ChatBubble
+              key={idx}
+              msg={msg}
+              isLastMessage={idx === messages.length - 1}
+              index={idx}
+            />
+          ))}
+          {loading && partialReply && !voiceMode && messages[messages.length - 1]?.role !== 'assistant' && <StreamingBubble partialReply={partialReply} />}
           <div ref={chatEndRef} />
         </div>
-        <form className="gpt-input-row gpt-centered-input glass-inputbar" style={{ margin: '0 auto', marginBottom: '32px', maxWidth: '520px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.22)', borderRadius: '32px', backdropFilter: 'blur(16px) saturate(1.2)', background: 'rgba(34,34,34,0.55)', position: 'absolute', left: '50%', bottom: '4vh', transform: 'translateX(-50%)' }} onSubmit={e => { e.preventDefault(); sendMessage(); }}>
-          <button className="gpt-upload-btn" type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '8px', padding: '0 8px', borderRadius: '12px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => fileInputRef.current?.click()}>
+
+        {/* --- Job Results Section (for AI to populate) --- */}
+        {jobResults.length > 0 && (
+          <section className="job-search-section">
+            <h3 style={{marginTop: 32}}>🔎 Recommended Jobs for You</h3>
+            <div style={{marginBottom: 12}}>
+              <a href='http://www.glassdoor.com:8080/index.htm' target='_blank' rel='noopener noreferrer'>
+                powered by <img src='https://www.glassdoor.com/static/img/api/glassdoor_logo_80.png' title='Job Search' style={{verticalAlign: 'middle'}} />
+              </a>
+            </div>
+            {jobSearchError && <div className="error">{jobSearchError}</div>}
+            <div className="job-results-list">
+              {jobResults.map(job => (
+                <React.Suspense fallback={<div>Loading...</div>} key={job.url}>
+                  {React.createElement(
+                    React.lazy(() => import('./components/JobCard')),
+                    { job }
+                  )}
+                </React.Suspense>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <form className="input-bar" onSubmit={(e: React.FormEvent) => { e.preventDefault(); sendMessage(); }}>
+          <button type="button" className="icon-btn" onClick={() => fileInputRef.current?.click()}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16.5 6.5l-5.5 5.5-5.5-5.5" />
-              <rect x="3" y="17" width="18" height="4" rx="2" />
-              <path d="M12 17V3" />
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 1 1-8.49-8.49l9.19-9.19a4.5 4.5 0 0 1 6.36 6.36l-9.2 9.2a2.5 2.5 0 1 1-3.54-3.54l8.49-8.49" />
             </svg>
-            <input id="file-upload" ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg" style={{display: 'none'}} onChange={handleFileUpload} />
+            <input ref={fileInputRef} type="file" hidden onChange={handleFileUpload} />
           </button>
-          <button className="gpt-mic-btn" type="button" disabled={loading || !voiceMode} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '8px', padding: '0 8px', borderRadius: '12px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={startListening}>
-            <svg width="24" height="24" stroke="currentColor" fill="none">
-              <rect x="9" y="2" width="6" height="12" rx="3" />
-              <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-              <line x1="12" y1="19" x2="12" y2="22" />
-              <line x1="8" y1="22" x2="16" y2="22" />
+          
+          <button
+            type="button"
+            title={ttsEnabled ? "Disable Text-to-Speech for manual text input" : "Enable Text-to-Speech for manual text input"}
+            className={`icon-btn tts-toggle ${ttsEnabled ? 'active' : ''} ${voiceMode ? 'disabled' : ''}`}
+            onClick={() => setTtsEnabled(prev => !prev)}
+            disabled={voiceMode}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              {ttsEnabled && <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>}
+              {!ttsEnabled && <line x1="23" y1="9" x2="17" y2="15"></line>}
+              {!ttsEnabled && <line x1="17" y1="9" x2="23" y2="15"></line>}
             </svg>
+          </button>
+
+          {isSpeaking && (
+            <button
+              type="button"
+              title="Stop Speaking"
+              className="icon-btn stop-btn"
+              onClick={stopSpeaking}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="6" y="6" width="12" height="12" fill="currentColor"></rect>
+              </svg>
+            </button>
+          )}
+          
+          <button
+            type="button"
+            title={voiceMode ? "Exit Speech-to-Speech Mode (Continuous Voice Chat)" : "Enter Speech-to-Speech Mode (Continuous Voice Chat)"}
+            className={`icon-btn s2s-toggle ${voiceMode ? 'active' : ''}`}
+            onClick={() => {
+              const newVoiceMode = !voiceMode;
+              console.log('S2S button clicked. Current voiceMode:', voiceMode, 'New voiceMode:', newVoiceMode);
+              setVoiceMode(newVoiceMode);
+              
+              // If turning ON S2S mode, automatically start listening
+              if (newVoiceMode) {
+                console.log('Enabling S2S mode, scheduling startListening...');
+                // Small delay to ensure state updates first
+                setTimeout(() => {
+                  console.log('S2S setTimeout callback executed, voiceMode should now be:', newVoiceMode);
+                  startListening();
+                }, 100);
+              } else {
+                console.log('Disabling S2S mode');
+                // If turning OFF S2S mode, stop listening and speaking
+                setIsListening(false);
+                stopSpeaking();
+              }
+            }}
+          >
+            {voiceMode ? '🔄' : 'S2S'}
+          </button>
+          
+          <button type="button" className="icon-btn mic-btn" disabled={loading || isSpeaking} onClick={startListening}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+            {isListening && <VoiceSpectrum />}
           </button>
           <input
-            className="gpt-input"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
             placeholder="Ask Everon..."
             disabled={loading}
             autoFocus
-            style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', color: '#f3f3f3', fontSize: '1.12rem', padding: '14px 18px', borderRadius: '12px' }}
           />
-          <button className="gpt-send-btn" type="submit" disabled={loading || !input.trim()} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '8px', padding: '0 8px', borderRadius: '12px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+          <button type="submit" className="icon-btn send-btn" disabled={loading || !input.trim()}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
           </button>
         </form>
-      </div>
+      </main>
     </div>
   );
 }

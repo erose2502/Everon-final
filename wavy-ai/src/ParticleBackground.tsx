@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 
 interface ParticleBackgroundProps {
-  isSpeaking: boolean;
+  isSpeaking?: boolean;
 }
 
-export default function ParticleBackground({ isSpeaking }: ParticleBackgroundProps) {
+export default function ParticleBackground({ isSpeaking = false }: ParticleBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
 
