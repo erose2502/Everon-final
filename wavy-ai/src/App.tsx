@@ -241,7 +241,7 @@ function App() {
     return new Promise<void>((resolve) => {
       try {
         const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'en-US';
+        utter.lang = 'en-US,fr-FR,sn-SN,es-ES,sw-KE';
         utter.rate = 0.9;
         utter.pitch = 1.0;
         
