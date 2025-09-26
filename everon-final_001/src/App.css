@@ -28,24 +28,26 @@ body {
   position: relative;
 }
 
+
 .main-content {
   display: flex;
   flex-direction: column;
-  align-items: center; /* always center the main column horizontally */
+  align-items: center;
   justify-content: flex-start;
-  min-height: auto; /* allow content to determine height so page grows with messages */
-  width: 100%;
-  max-width: min(1100px, 96vw); /* constrain a centered column */
-  margin: 0 auto; /* center the column in the viewport */
-  padding: 20px 12px;
+  min-height: auto;
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
+  padding: 20px 0px;
   box-sizing: border-box;
 }
 
 /* Centered content column for header, quick actions, and chat */
+
 .content-wrap {
-  width: 100%;
-  max-width: min(960px, 92vw);
-  margin: 0 auto;
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
