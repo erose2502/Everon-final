@@ -292,20 +292,29 @@ body {
   }
   
   .chat-window {
-    padding: 0 0.5rem 1rem;
+    padding: 0 0.2rem 1rem;
   }
   
   .chat-bubble {
-    max-width: 85%;
-    font-size: 1rem;
+    max-width: 98vw;
+    font-size: 1.05rem;
+    margin-bottom: 0.7rem;
   }
   
   .input-bar {
-    margin: 1rem 0.5rem;
+    margin: 1rem 0.2rem;
+    min-height: 56px;
+    padding: 0.5rem 0.5rem;
   }
   
   .main-content {
     padding: 15px 8px;
+  }
+
+  .icon-btn, .mic-btn, .send-btn {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.3em;
   }
 }
 .modal-actions button:last-child { background: var(--brand-color); }
