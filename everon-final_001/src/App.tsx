@@ -124,9 +124,9 @@ function App() {
         console.log('speakText completed');
       }
       
-      // If in S2S mode, automatically start listening again after response
+      // If in voice mode, automatically start listening again after response
       if (voiceModeRef.current) {
-        console.log('S2S mode active, scheduling next listening session...');
+        console.log('Voice mode active, scheduling next listening session...');
         // Small delay to ensure audio cleanup and give user a moment to respond
         setTimeout(() => {
           console.log('Timeout executed. voiceModeRef:', voiceModeRef.current, 'isListening:', isListening, 'isSpeaking:', isSpeaking);
@@ -139,7 +139,7 @@ function App() {
           }
         }, 1000); // Slightly longer delay for better audio separation
       } else {
-        console.log('Not in S2S mode, skipping continuous listening');
+        console.log('Not in voice mode, skipping continuous listening');
       }
     } catch (err) {
       setMessages((prev: Message[]) => [...prev, { role: 'assistant', content: 'Error: ' + (err as Error).message }]);
@@ -497,39 +497,68 @@ function App() {
           
           <button
             type="button"
-            title={voiceMode ? "Exit Speech-to-Speech Mode (Continuous Voice Chat)" : "Enter Speech-to-Speech Mode (Continuous Voice Chat)"}
-            className={`icon-btn s2s-toggle ${voiceMode ? 'active' : ''}`}
+            title={voiceMode ? "Exit Voice Mode (Click to stop continuous voice chat)" : isListening ? "Listening... (Click to stop)" : "Start Voice Chat (Click for single use, hold for continuous mode)"}
+            className={`icon-btn mic-btn ${voiceMode ? 'voice-mode' : ''} ${isListening ? 'listening' : ''}`}
+            disabled={loading || isSpeaking}
             onClick={() => {
-              const newVoiceMode = !voiceMode;
-              console.log('S2S button clicked. Current voiceMode:', voiceMode, 'New voiceMode:', newVoiceMode);
-              setVoiceMode(newVoiceMode);
-              
-              // If turning ON S2S mode, automatically start listening
-              if (newVoiceMode) {
-                console.log('Enabling S2S mode, scheduling startListening...');
-                // Small delay to ensure state updates first
-                setTimeout(() => {
-                  console.log('S2S setTimeout callback executed, voiceMode should now be:', newVoiceMode);
-                  startListening();
-                }, 100);
-              } else {
-                console.log('Disabling S2S mode');
-                // If turning OFF S2S mode, stop listening and speaking
+              if (voiceMode) {
+                // If in voice mode, clicking toggles it off
+                console.log('Exiting voice mode');
+                setVoiceMode(false);
                 setIsListening(false);
                 stopSpeaking();
+              } else if (isListening) {
+                // If currently listening (single session), stop listening
+                console.log('Stopping single listening session');
+                setIsListening(false);
+              } else {
+                // Start listening - single press for one-time
+                console.log('Starting single voice input');
+                startListening();
+              }
+            }}
+            onMouseDown={() => {
+              // Start timer for long press detection (only if not already in voice mode)
+              if (!voiceMode && !isListening) {
+                const longPressTimer = setTimeout(() => {
+                  console.log('Long press detected - enabling continuous voice mode');
+                  setVoiceMode(true);
+                  startListening();
+                }, 800); // 800ms for long press
+                
+                // Store timer to clear on mouse up
+                (window as any).micLongPressTimer = longPressTimer;
+              }
+            }}
+            onMouseUp={() => {
+              // Clear long press timer
+              if ((window as any).micLongPressTimer) {
+                clearTimeout((window as any).micLongPressTimer);
+                delete (window as any).micLongPressTimer;
+              }
+            }}
+            onMouseLeave={() => {
+              // Clear long press timer if mouse leaves button
+              if ((window as any).micLongPressTimer) {
+                clearTimeout((window as any).micLongPressTimer);
+                delete (window as any).micLongPressTimer;
               }
             }}
           >
-            {voiceMode ? '🔄' : 'S2S'}
-          </button>
-          
-          <button type="button" className="icon-btn mic-btn" disabled={loading || isSpeaking} onClick={startListening}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {voiceMode ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '18px' }}>
+                🎤🔄
+              </div>
+            ) : isListening ? (
+              <VoiceSpectrum />
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                 <line x1="12" y1="19" x2="12" y2="22"></line>
-            </svg>
-            {isListening && <VoiceSpectrum />}
+                <line x1="8" y1="22" x2="16" y2="22"></line>
+              </svg>
+            )}
           </button>
           <input
             value={input}

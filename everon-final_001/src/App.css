@@ -131,15 +131,30 @@ body {
   line-height: 1.5;
   max-width: 85%;
   word-wrap: break-word;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15), 0 16px 50px rgba(0,0,0,0.1);
   box-sizing: border-box;
+  position: relative;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.chat-bubble { opacity: 0; transform: translateY(6px); animation: bubbleIn 220ms cubic-bezier(.2,.9,.25,1) forwards; animation-delay: var(--delay, 0ms); }
+
+.chat-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2), 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.chat-bubble { 
+  opacity: 0; 
+  transform: translateY(10px) scale(0.98); 
+  animation: bubbleFloatIn 400ms cubic-bezier(.2,.8,.2,1) forwards; 
+  animation-delay: var(--delay, 0ms); 
+}
 .user-bubble {
-  background: var(--user-bubble);
+  background: linear-gradient(135deg, var(--user-bubble) 0%, #6ea8ff 100%);
   color: #ffffff;
   border-bottom-right-radius: 4px;
   align-self: flex-end;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .assistant-bubble {
@@ -147,6 +162,7 @@ body {
   color: #ffffff;
   border-bottom-left-radius: 4px;
   align-self: flex-start;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 .structured-bubble {
   background: linear-gradient(135deg, #4f7fff, #265cff);
@@ -230,7 +246,47 @@ body {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.mic-btn { position: relative; }
+.mic-btn { 
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.mic-btn.voice-mode {
+  background-color: #22c55e !important;
+  color: white !important;
+  animation: voiceModePulse 2s ease-in-out infinite;
+}
+
+.mic-btn.listening {
+  background-color: var(--brand-color) !important;
+  color: white !important;
+  animation: listeningPulse 1s ease-in-out infinite;
+}
+
+@keyframes voiceModePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+}
+
+@keyframes listeningPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 140, 255, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(79, 140, 255, 0); }
+}
+
+@keyframes bubbleFloatIn {
+  0% { 
+    opacity: 0; 
+    transform: translateY(15px) scale(0.95); 
+  }
+  60% { 
+    opacity: 0.8; 
+    transform: translateY(-2px) scale(1.02); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
 .send-btn { transition: transform 140ms ease, box-shadow 140ms ease; }
 .send-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 20px rgba(41, 148, 209, 0.12); }
 
@@ -265,10 +321,6 @@ body {
 @keyframes dropdownIn {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes bubbleIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.995); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* --- Modal --- */
@@ -417,41 +469,28 @@ body {
     width: 18px;
     height: 18px;
   }
-  
-  .s2s-toggle {
-    font-size: 0.65rem;
-    min-width: 36px;
-    padding: 0.4rem;
-  }
 }
 .modal-actions button:last-child { background: var(--brand-color); }
 
 /* --- Toggle Buttons --- */
-.tts-toggle, .s2s-toggle {
+.tts-toggle {
   position: relative;
   opacity: 0.7;
   transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
 }
 
-.tts-toggle:hover, .s2s-toggle:hover {
+.tts-toggle:hover {
   opacity: 1;
   transform: scale(1.05);
 }
 
-.tts-toggle.active, .s2s-toggle.active {
+.tts-toggle.active {
   opacity: 1;
   background-color: var(--brand-color);
   color: white;
 }
 
-.s2s-toggle {
-  font-size: 0.75rem;
-  font-weight: 600;
-  min-width: 40px;
-  padding: 0.5rem;
-}
-
-/* Disabled state for TTS when in S2S mode */
+/* Disabled state for TTS when in Voice mode */
 .tts-toggle.disabled {
   opacity: 0.3;
   cursor: not-allowed;
@@ -464,27 +503,8 @@ body {
   transform: none;
 }
 
-/* Special styling for S2S active state */
-.s2s-toggle.active {
-  background-color: #22c55e !important;
-  color: white !important;
-  animation: s2sPulse 2s ease-in-out infinite;
-}
-
-@keyframes s2sPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-}
-
-.voice-mode-indicator {
-  color: #22c55e;
-  font-weight: 600;
-  animation: pulse 2s ease-in-out infinite;
-}
-
 /* Visual indicator when speaking */
-.tts-toggle.active svg,
-.s2s-toggle.active {
+.tts-toggle.active svg {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
