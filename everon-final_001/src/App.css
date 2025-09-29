@@ -11,12 +11,22 @@
   --assistant-bubble: #20b2aa;
 }
 
-body {
+* {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
   background-color: var(--background-dark);
   color: var(--text-primary);
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  overflow-x: hidden;
 }
 
 /* --- App Layout --- */
@@ -24,9 +34,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  min-height: 100dvh; /* Use dynamic viewport height for mobile */
+  min-height: 100dvh;
   width: 100%;
-  align-items: center;
   position: relative;
   overflow-x: hidden;
 }
@@ -39,18 +48,14 @@ body {
   justify-content: flex-start;
   flex: 1;
   width: 100%;
-  max-width: 100vw;
-  margin: 0;
-  padding: 20px 0px 80px 0px; /* Add padding-bottom for fixed input bar */
+  padding: 20px 0px 80px 0px;
   box-sizing: border-box;
 }
 
 /* Centered content column for header, quick actions, and chat */
 
 .content-wrap {
-  width: 100vw;
-  max-width: 100vw;
-  margin: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -94,7 +99,6 @@ body {
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  /* Normal document flow: messages will stack and push content down */
   overflow: visible;
   padding: 0 1rem 1rem;
   display: flex;
@@ -118,7 +122,6 @@ body {
   padding: 0 4px; 
   box-sizing: border-box;
 }
-/* Bubbles should occupy the full width of the centered column so we can align them left/right */
 .user-row { justify-content: flex-end; }
 .assistant-row { justify-content: flex-start; }
 
@@ -140,7 +143,6 @@ body {
 }
 
 .assistant-bubble {
-  /* Gradient background like in the third screenshot */
   background: linear-gradient(135deg, #20b2aa 0%, #48d1cc 50%, #5fe3dc 100%);
   color: #ffffff;
   border-bottom-left-radius: 4px;
@@ -188,13 +190,11 @@ body {
   left: 0;
   right: 0;
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   background: rgba(26, 31, 44, 0.95);
-  border-radius: 28px 28px 0 0;
+  border-radius: 0;
   box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
   backdrop-filter: blur(12px);
   padding: 0.75rem 1rem;
@@ -301,7 +301,7 @@ body {
 @media (max-width: 768px) {
   .app-header {
     margin: 1.5rem auto 2rem;
-    padding: 0 1.5rem;
+    padding: 0 1rem;
   }
   
   .app-header h1 {
@@ -319,7 +319,7 @@ body {
   }
   
   .chat-window {
-    padding: 0 0.75rem 1rem;
+    padding: 0 1rem 1rem;
     gap: 0.75rem;
   }
   
@@ -330,13 +330,12 @@ body {
   }
   
   .chat-bubble-row {
-    padding: 0 2px;
+    padding: 0 8px;
   }
   
   .input-bar {
-    max-width: 100%;
-    padding: 0.6rem 0.75rem;
-    border-radius: 20px 20px 0 0;
+    padding: 0.75rem 1rem;
+    border-radius: 0;
   }
   
   .input-bar input {
@@ -345,27 +344,18 @@ body {
   }
   
   .main-content {
-    padding: 15px 0px 70px 0px;
-  }
-
-  .content-wrap {
-    padding: 0;
+    padding: 15px 0px 80px 0px;
   }
 
   .icon-btn {
-    min-width: 40px;
-    min-height: 40px;
-    padding: 0.4rem;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem;
   }
   
   .mic-btn, .send-btn {
-    min-width: 40px;
-    min-height: 40px;
-  }
-  
-  .icon-btn svg {
-    width: 20px;
-    height: 20px;
+    min-width: 44px;
+    min-height: 44px;
   }
   
   /* Adjust modal for mobile */
