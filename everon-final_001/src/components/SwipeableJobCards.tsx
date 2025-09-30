@@ -138,6 +138,11 @@ const SwipeableJobCards: React.FC<SwipeableJobCardsProps> = ({ jobs }) => {
     return baseTransform;
   };
 
+  // Handle indicator click to jump to specific card
+  const handleIndicatorClick = (index: number) => {
+    setCurrentIndex(index);
+  };
+
   if (jobs.length === 0) {
     return null;
   }
@@ -207,6 +212,16 @@ const SwipeableJobCards: React.FC<SwipeableJobCardsProps> = ({ jobs }) => {
           <div
             key={index}
             className={`indicator ${index === currentIndex ? 'active' : ''}`}
+            onClick={() => handleIndicatorClick(index)}
+            role="button"
+            tabIndex={0}
+            aria-label={`Go to job ${index + 1}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleIndicatorClick(index);
+              }
+            }}
           />
         ))}
       </div>

@@ -2,9 +2,11 @@
 const CACHE_NAME = 'everon-v1';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/Logo icon.png'
+  '/index.html',
+  '/favicon-32x32.png',
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
