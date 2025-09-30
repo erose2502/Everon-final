@@ -42,66 +42,60 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
   return (
     <div className="job-card-enhanced" onClick={handleCardClick} style={{ cursor: job.url ? 'pointer' : 'default' }}>
-      {/* Header Section */}
-      <div className="job-card-header-enhanced">
-        <div className="job-title-section">
-          <h3 className="job-title-enhanced">{job.title}</h3>
-          <div className="job-meta-badges">
-            {job.match_score && (
-              <span 
-                className="match-score-enhanced" 
-                style={{ backgroundColor: getMatchScoreColor(job.match_score) }}
-              >
-                <span className="match-icon">🎯</span>
-                {job.match_score}% Match
-              </span>
-            )}
-            {job.type && (
-              <span className="job-type-badge">
-                <span className="type-icon">⏰</span>
-                {job.type}
-              </span>
-            )}
-            {job.remote && (
-              <span className="remote-badge">
-                <span className="remote-icon">🌐</span>
-                Remote
-              </span>
-            )}
+      {/* Header Section - Clean & Compelling Design */}
+      <div className="job-card-header-clean">
+        <div className="header-main">
+          <div className="title-company-row">
+            <h3 className="job-title-clean">{job.title}</h3>
+            <div className="match-indicator">
+              {job.match_score && (
+                <div 
+                  className="match-score-clean" 
+                  style={{ backgroundColor: getMatchScoreColor(job.match_score) }}
+                >
+                  {job.match_score}%
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="company-row">
+            <span className="company-name">{job.company}</span>
+            {job.remote && <span className="remote-tag">Remote OK</span>}
           </div>
         </div>
         
-        <div className="company-info">
-          <h4 className="job-company-enhanced">
-            <span className="company-icon">🏢</span>
-            {job.company}
-          </h4>
-          <div className="job-details-row">
-            <span className="job-location-enhanced">
-              <span className="location-icon">📍</span>
-              {job.location}
-            </span>
-            {job.salary && (
-              <span className="job-salary-enhanced">
-                <span className="salary-icon">💰</span>
-                {job.salary}
-              </span>
+        <div className="header-meta">
+          {job.salary && (
+            <div className="salary-display">
+              <span className="salary-amount">{job.salary}</span>
+            </div>
+          )}
+          <div className="job-badges">
+            {job.type && (
+              <span className="type-badge">{job.type.replace('-', ' ')}</span>
             )}
+            <span className="posted-date">{formatDate(job.posted_date)}</span>
           </div>
         </div>
       </div>
 
       {/* Body Section */}
       <div className="job-card-body-enhanced">
-        {job.description && (
-          <div className="job-description-section">
-            <h5 className="section-title">
-              <span className="desc-icon">📝</span>
-              Job Description
-            </h5>
-            <p className="job-description-enhanced">{job.description}</p>
-          </div>
-        )}
+        {/* Location Section */}
+        <div className="job-location-section">
+          <span className="location-icon">📍</span>
+          <span className="location-text">{job.location}</span>
+        </div>
+
+        {/* Description Section - Always show */}
+        <div className="job-description-section">
+          <h5 className="section-title">
+            <span className="desc-icon">📝</span>
+            Job Description
+          </h5>
+          <p className="job-description-enhanced">{job.description}</p>
+        </div>
 
         {job.requirements && job.requirements.length > 0 && (
           <div className="job-requirements-section">

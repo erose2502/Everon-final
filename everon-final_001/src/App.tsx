@@ -4,7 +4,6 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 // The `?url` suffix tells Vite to return the file URL instead of bundling its contents.
 // the package provides .mjs worker files; import the existing file with .mjs extension so Vite can resolve it
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import './App.css';
 import { askOpenAIAgent } from './agents';
 
@@ -102,6 +101,7 @@ import SwipeableJobCards from './components/SwipeableJobCards';
 import SpeechModeUI from './components/SpeechModeUI';
 import { SuccessCelebration, PremiumProcessingIndicator } from './components/PremiumAnimations';
 import HandoffAnimation from './components/HandoffAnimation';
+import JobSearchHandoffAnimation from './components/JobSearchHandoffAnimation';
 import { jobSearchService } from './utils/jobSearchService';
 import type { JobSearchResult, UserProfile } from './types/job';
 import { useLiveKitVoice } from './hooks/useLiveKitVoice';
@@ -170,6 +170,10 @@ function App() {
   const [activeTools, setActiveTools] = useState<string[]>([]);
   const [jobSearchMode, setJobSearchMode] = useState(false);
   const [jobSearchPrompt, setJobSearchPrompt] = useState('');
+  
+  // Voice conversation tracking to prevent repetitive questions
+  const [askedTopics, setAskedTopics] = useState<Set<string>>(new Set());
+  const [, setConversationPhase] = useState<'greeting' | 'gathering' | 'searching' | 'advising'>('greeting');
   
   // Language preference state
   const [language] = useState<'english' | 'french' | 'swahili' | 'arabic' | 'spanish' | 'auto'>('english');
@@ -328,6 +332,12 @@ function App() {
         if (activeTools.includes('websearch') || shouldAutoSearch) {
           try {
             console.log('🔍 Performing real-time web search...');
+            setIsSearchingJobs(true); // Show job search animation
+            
+            // Safety timeout to ensure animation doesn't get stuck
+            setTimeout(() => {
+              setIsSearchingJobs(false);
+            }, 15000); // 15 second timeout
             
             // Always focus on jobs - this is a career coach
             if (transcript.toLowerCase().includes('trend') || transcript.toLowerCase().includes('market')) {
@@ -335,11 +345,45 @@ function App() {
               searchResults = `Top 2 trending roles: ${trends.slice(0, 2).map(t => t.title).join(', ')}. `;
             } else {
               const jobs = await webSearchService.searchJobs(transcript, userProfile || undefined);
-              searchResults = `Found ${jobs.length} jobs. Top match: ${jobs[0]?.title} at ${jobs[0]?.company}${jobs[0]?.salary ? ` - ${jobs[0]?.salary}` : ''}. `;
+              
+              // Set job results for carousel display (same as regular chat mode)
+              if (jobs && jobs.length > 0) {
+                setJobResults(jobs);
+                setShowJobResults(true);
+                
+                // Create detailed voice response that reads out the positions
+                const topJobs = jobs.slice(0, 3); // Read out top 3 jobs
+                let detailedResults = `I found ${jobs.length} relevant job opportunities for you! Here are the top positions: `;
+                
+                topJobs.forEach((job, index) => {
+                  const jobNumber = index + 1;
+                  const salaryInfo = job.salary ? ` with salary ${job.salary}` : '';
+                  const locationInfo = job.location ? ` located in ${job.location}` : '';
+                  
+                  detailedResults += `${jobNumber}. ${job.title} at ${job.company}${salaryInfo}${locationInfo}. `;
+                  
+                  // Add brief description for the first job
+                  if (index === 0 && job.description) {
+                    const shortDesc = job.description.split('.')[0] || job.description.substring(0, 100);
+                    detailedResults += `This role involves ${shortDesc.toLowerCase()}. `;
+                  }
+                });
+                
+                if (jobs.length > 3) {
+                  detailedResults += `Plus ${jobs.length - 3} more opportunities available in the job carousel above. `;
+                }
+                
+                detailedResults += `You can see all the details in the job cards displayed above!`;
+                searchResults = detailedResults;
+              } else {
+                searchResults = `I searched extensively but couldn't find specific job listings right now. Let me help you refine your search or explore other opportunities. `;
+              }
             }
           } catch (error) {
             console.error('Web search failed:', error);
             searchResults = `Let me help you find jobs. `;
+          } finally {
+            setIsSearchingJobs(false); // Hide job search animation
           }
         }
         
@@ -383,28 +427,73 @@ ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. '
           console.log('🔄 Tools deactivated after use');
         }, 500); // Small delay to show the activation briefly
       } else {
-        // Use optimized voice agent with smart information tracking
-        const allMessages = messages.slice(-6); // Last 6 messages for context
-        const conversationText = allMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n') + `\nuser: ${transcript}`;
+        // Smart conversation tracking to avoid repetitive questions
+        const recentMessages = messages.slice(-8); // Last 8 messages for better context
+        const conversationText = recentMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n');
         
-        // Extract information from entire conversation
-        const hasRole = /(?:looking for|want|seeking|interested in|as a|position|job|role).*?(developer|engineer|manager|analyst|designer|data scientist|product manager|marketing|sales|consultant|specialist|coordinator)/i.test(conversationText);
-        const hasLocation = /(?:remote|hybrid|onsite|in |from |located|area|city|state|country|anywhere)/i.test(conversationText);
-        const hasSalary = /(?:\$|salary|pay|compensation|income|k |000|budget|range).*?[\d,]+/i.test(conversationText);
-        const hasExperience = /(?:year|experience|exp|junior|senior|mid-level|entry|level|\d+\s*years?)/i.test(conversationText);
+        // Track what's been discussed to avoid repetition
+        const discussedTopics = {
+          role: /(?:role|position|job|title|work as|looking for|want to be|career|profession)/i.test(conversationText),
+          location: /(?:location|where|remote|city|state|area|live|based|prefer)/i.test(conversationText),
+          salary: /(?:salary|pay|money|compensation|income|budget|\$)/i.test(conversationText),
+          experience: /(?:experience|years|level|background|worked|previous|skills)/i.test(conversationText),
+          timeline: /(?:when|start|timeline|available|looking to)/i.test(conversationText),
+          company: /(?:company|employer|startup|corporation|team)/i.test(conversationText)
+        };
         
-        // Create enhanced prompt for voice agent
-        const missingInfo = [];
-        if (!hasRole) missingInfo.push('role');
-        if (!hasLocation) missingInfo.push('location');
-        if (!hasSalary) missingInfo.push('salary');
-        if (!hasExperience) missingInfo.push('experience');
+        // Check recent AI responses to avoid asking same questions
+        const recentAIQuestions = recentMessages
+          .filter(msg => msg.role === 'assistant')
+          .map(msg => msg.content.toLowerCase())
+          .join(' ');
         
-        const enhancedTranscript = missingInfo.length > 0 
-          ? `User said: "${transcript}". Missing info: ${missingInfo.join(', ')}. Ask for ONE missing detail only.`
-          : `User said: "${transcript}". You have all info needed. Provide job recommendations or next steps.`;
+        const hasAskedAbout = {
+          role: /what.*role|what.*job|what.*position|looking for/i.test(recentAIQuestions),
+          location: /where.*work|location|remote/i.test(recentAIQuestions),
+          salary: /salary|pay|compensation/i.test(recentAIQuestions),
+          experience: /experience|background|years/i.test(recentAIQuestions)
+        };
         
-        response = await askOpenAIVoiceAgent(enhancedTranscript, allMessages);
+        // Update conversation phase and tracking
+        const messageCount = messages.length;
+        const currentPhase = messageCount < 2 ? 'greeting' : 
+                           messageCount < 8 ? 'gathering' : 
+                           discussedTopics.role && discussedTopics.location ? 'searching' : 'advising';
+        setConversationPhase(currentPhase);
+        
+        console.log(`🎯 Voice Agent Phase: ${currentPhase}, Messages: ${messageCount}`);
+        
+        // Track what we've recently asked about to avoid repetition
+        const newAskedTopics = new Set(askedTopics);
+        Object.entries(hasAskedAbout).forEach(([topic, asked]) => {
+          if (asked) newAskedTopics.add(topic);
+        });
+        setAskedTopics(newAskedTopics);
+        
+        // Create context-aware prompt for more natural conversations
+        const contextPrompt = `
+CONVERSATION CONTEXT: The user just said "${transcript}"
+PHASE: ${currentPhase.toUpperCase()}
+MESSAGE COUNT: ${messageCount}
+
+DISCUSSION HISTORY:
+- Role/Position: ${discussedTopics.role ? '✓ Discussed' : '✗ Not mentioned'}
+- Location: ${discussedTopics.location ? '✓ Discussed' : '✗ Not mentioned'}  
+- Experience: ${discussedTopics.experience ? '✓ Discussed' : '✗ Not mentioned'}
+- Salary: ${discussedTopics.salary ? '✓ Discussed' : '✗ Not mentioned'}
+
+PREVIOUSLY ASKED: ${Array.from(newAskedTopics).join(', ') || 'Nothing'}
+
+INSTRUCTIONS: 
+- ${currentPhase === 'greeting' ? 'Welcome enthusiastically and ask what brings them here' : ''}
+- ${currentPhase === 'gathering' ? 'Ask about ONE new topic not yet discussed, be encouraging' : ''}
+- ${currentPhase === 'searching' ? 'Offer to search for jobs or provide specific career tips' : ''}
+- ${currentPhase === 'advising' ? 'Give actionable career advice or motivation' : ''}
+- NEVER repeat questions about topics in PREVIOUSLY ASKED list
+- Be upbeat, use casual language, show genuine excitement about helping
+- If user asks about your creator, mention you were built by an innovative developer who wanted to help job seekers succeed`;
+        
+        response = await askOpenAIVoiceAgent(contextPrompt, recentMessages);
       }
       
       // Add user message to chat
@@ -691,7 +780,30 @@ ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. '
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (file) setPreviewFile({ name: file.name, type: file.type, url: URL.createObjectURL(file) });
+    if (file) {
+      const fileData = { name: file.name, type: file.type, url: URL.createObjectURL(file) };
+      
+      if (speechMode) {
+        // In voice mode, automatically process the resume without preview
+        setPreviewFile(fileData);
+        // Auto-process the file immediately in voice mode
+        setTimeout(() => processPreviewFile(), 100);
+        
+        // Provide voice feedback
+        const uploadMessage = `I've received your resume "${file.name}". I'm now analyzing it to understand your background and skills for better job matching.`;
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: uploadMessage
+        }]);
+        
+        // Speak the confirmation
+        ttsService.speak(uploadMessage);
+        setIsTTSSpeaking(true);
+      } else {
+        // Regular chat mode - show preview first
+        setPreviewFile(fileData);
+      }
+    }
   };
 
   const processPreviewFile = async () => {
@@ -787,10 +899,20 @@ ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. '
       
       // Automatically suggest job search after resume analysis
       setTimeout(() => {
+        const jobSuggestionMessage = speechMode 
+          ? `🎯 Excellent! I've successfully analyzed your resume and extracted your professional profile. I now understand your background as a ${userProfile?.jobTitle || 'professional'} with ${userProfile?.experience || 'valuable experience'} in your field. Your resume is now ready and I can use it to find personalized job opportunities. You can now ask me to search for jobs by saying something like "Find me jobs" or "Search for positions in my field", and I'll use your resume information to find the best matches!`
+          : `🎯 Perfect! I've analyzed your resume and extracted your profile. Would you like me to find job opportunities that match your background in ${userProfile?.jobTitle || 'your field'}? Just type "find jobs" or click the job search button to get started!`;
+          
         setMessages((prev: Message[]) => [...prev, { 
           role: 'assistant', 
-          content: `🎯 Perfect! I've analyzed your resume and extracted your profile. Would you like me to find job opportunities that match your background in ${userProfile?.jobTitle || 'your field'}? Just type "find jobs" or click the job search button to get started!`
+          content: jobSuggestionMessage
         }]);
+        
+        // In voice mode, speak the message
+        if (speechMode) {
+          ttsService.speak(jobSuggestionMessage);
+          setIsTTSSpeaking(true);
+        }
       }, 2000);
       
     } catch (err) {
@@ -799,7 +921,15 @@ ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. '
         setHandoffInterval(null);
       }
       setShowHandoffAnimation(false);
-      setMessages((prev: Message[]) => [...prev, { role: 'assistant', content: 'Error processing file: ' + (err as Error).message }]);
+      const errorMessage = 'Error processing file: ' + (err as Error).message;
+      setMessages((prev: Message[]) => [...prev, { role: 'assistant', content: errorMessage }]);
+      
+      // In voice mode, speak the error message
+      if (speechMode) {
+        const voiceErrorMessage = `I encountered an issue processing your resume: ${(err as Error).message}. Please try uploading the file again or use a different format like PDF.`;
+        ttsService.speak(voiceErrorMessage);
+        setIsTTSSpeaking(true);
+      }
     } finally {
       setLoading(false);
       setPartialReply('');
@@ -929,6 +1059,14 @@ ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. '
         setJobSearchPrompt('');
       }
       try {
+        // Show job search animation
+        setIsSearchingJobs(true);
+        
+        // Safety timeout to ensure animation doesn't get stuck
+        setTimeout(() => {
+          setIsSearchingJobs(false);
+        }, 15000); // 15 second timeout
+        
         // Use webSearchService for real-time job search
         console.log('🔍 Starting job search with webSearchService for query:', searchQuery);
         console.log('👤 Using user profile:', userProfile);
@@ -986,6 +1124,8 @@ ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. '
         } catch (fallbackError) {
           console.error('❌ Fallback job search also failed:', fallbackError);
         }
+      } finally {
+        setIsSearchingJobs(false); // Hide job search animation
       }
     } else {
       // Regular AI conversation - build context from previous messages
@@ -1055,6 +1195,7 @@ Use this information to provide personalized career advice and job recommendatio
                 title="Processing Your Resume"
                 subtitle={messages[handoffStep] || messages[0]}
                 size={180}
+                onClose={() => setShowHandoffAnimation(false)}
               />
             );
           })()}
@@ -1081,18 +1222,22 @@ Use this information to provide personalized career advice and job recommendatio
             <SwipeableJobCards jobs={jobResults} />
           )}
           
-          {isSearchingJobs && (
-            <div className="searching-indicator">
-              <div className="job-search-lottie">
-                <DotLottieReact
-                  src="https://lottie.host/946421bb-a3a6-48a9-9399-99c3d1605696/6UhC6bKIEk.lottie"
-                  loop
-                  autoplay
-                />
-              </div>
-              <p>Searching for job opportunities...</p>
-            </div>
-          )}
+          {isSearchingJobs && (() => {
+            const searchMessages = [
+              "Analyzing job market trends...",
+              "Finding opportunities that match your skills...", 
+              "Searching across top job boards...",
+              "Curating the best matches for you..."
+            ];
+            return (
+              <JobSearchHandoffAnimation
+                title="🔍 Finding Your Perfect Job"
+                subtitle={searchMessages[handoffStep] || searchMessages[0]}
+                size={180}
+                onClose={() => setIsSearchingJobs(false)}
+              />
+            );
+          })()}
           
           {/* LiveKit Voice Status */}
           {livekit.isActive && (
@@ -1196,6 +1341,10 @@ Use this information to provide personalized career advice and job recommendatio
                 
                 setSpeechMode(true);
                 
+                // Reset conversation tracking for fresh voice session
+                setAskedTopics(new Set());
+                setConversationPhase('greeting');
+                
                 // Show celebration for first-time speech mode users
                 if (!hasUsedSpeechMode) {
                   setCelebrationData({
@@ -1270,12 +1419,85 @@ Use this information to provide personalized career advice and job recommendatio
             // Trigger file upload while keeping speech mode active
             fileInputRef.current?.click();
           }}
-          onWebSearch={() => {
-            // Add message suggesting web search via voice
-            setMessages(prev => [...prev, { 
-              role: 'assistant', 
-              content: 'You can ask me to search the web by saying something like "Search for remote software developer jobs" or "Find the latest AI trends".' 
-            }]);
+          onWebSearch={async () => {
+            // Perform actual job search when web search tool is clicked in voice mode
+            try {
+              console.log('🔍 Voice Mode: Manual web search activated');
+              setIsSearchingJobs(true);
+              
+              // Use a generic job search query if no specific query is available
+              const searchQuery = currentTranscript || "software developer jobs remote";
+              console.log('🔍 Voice Mode: Searching with query:', searchQuery);
+              
+              const jobs = await webSearchService.searchJobs(searchQuery, userProfile || undefined);
+              
+              if (jobs && jobs.length > 0) {
+                // Set job results for carousel display (same as regular chat mode)
+                setJobResults(jobs);
+                setShowJobResults(true);
+                
+                // Create detailed voice response that reads out the positions
+                const topJobs = jobs.slice(0, 3); // Read out top 3 jobs
+                let responseMessage = `I found ${jobs.length} relevant job opportunities! Here are the top positions: `;
+                
+                topJobs.forEach((job, index) => {
+                  const jobNumber = index + 1;
+                  const salaryInfo = job.salary ? ` with salary ${job.salary}` : '';
+                  const locationInfo = job.location ? ` located in ${job.location}` : '';
+                  
+                  responseMessage += `${jobNumber}. ${job.title} at ${job.company}${salaryInfo}${locationInfo}. `;
+                  
+                  // Add brief description for the first job
+                  if (index === 0 && job.description) {
+                    const shortDesc = job.description.split('.')[0] || job.description.substring(0, 100);
+                    responseMessage += `This role involves ${shortDesc.toLowerCase()}. `;
+                  }
+                });
+                
+                if (jobs.length > 3) {
+                  responseMessage += `Plus ${jobs.length - 3} more opportunities available in the job carousel. `;
+                }
+                
+                responseMessage += `You can explore all the details in the job cards displayed above!`;
+                
+                // Add the response message and speak it
+                setMessages(prev => [...prev, { 
+                  role: 'assistant', 
+                  content: responseMessage
+                }]);
+                
+                // Speak the results out loud
+                ttsService.speak(responseMessage);
+                setIsTTSSpeaking(true);
+                
+              } else {
+                const noResultsMessage = 'I searched extensively but couldn\'t find specific job listings right now. Try asking me to search for specific roles like "Search for software developer jobs" or "Find marketing positions".';
+                
+                setMessages(prev => [...prev, { 
+                  role: 'assistant', 
+                  content: noResultsMessage
+                }]);
+                
+                // Speak the no results message
+                ttsService.speak(noResultsMessage);
+                setIsTTSSpeaking(true);
+              }
+              
+            } catch (error) {
+              console.error('Voice Mode: Web search failed:', error);
+              const errorMessage = 'I encountered an issue searching for jobs. Please try asking me to search by voice, like "Search for remote developer jobs".';
+              
+              setMessages(prev => [...prev, { 
+                role: 'assistant', 
+                content: errorMessage
+              }]);
+              
+              // Speak the error message
+              ttsService.speak(errorMessage);
+              setIsTTSSpeaking(true);
+            } finally {
+              setIsSearchingJobs(false);
+            }
           }}
           onActiveToolsChange={(tools) => {
             setActiveTools(tools);

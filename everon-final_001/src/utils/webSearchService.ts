@@ -182,7 +182,12 @@ class WebSearchService {
       ? ` for someone with ${userProfile.experience} experience in ${userProfile.skills?.join(', ')}`
       : '';
     
-    const searchQuery = `current job openings ${query}${profileContext} ${new Date().getFullYear()} site:indeed.com OR site:linkedin.com OR site:glassdoor.com`;
+    // Include location in search if available
+    const locationContext = userProfile?.location 
+      ? ` in ${userProfile.location} or remote`
+      : '';
+    
+    const searchQuery = `current job openings ${query}${profileContext}${locationContext} ${new Date().getFullYear()} site:indeed.com OR site:linkedin.com OR site:glassdoor.com`;
 
     console.log('🔍 Searching jobs with query:', searchQuery);
 
@@ -192,17 +197,27 @@ class WebSearchService {
         messages: [
           {
             role: "system",
-            content: "You are a job search assistant. Search for real job listings and provide specific details including job title, company name, location, salary (if available), and a brief description. Only include actual job postings you find."
+            content: "You are an expert job search assistant. Search comprehensively for real job listings and provide detailed information for each position. For EVERY job you find, you MUST include: 1) Complete job title, 2) Company name, 3) EXACT LOCATION (city, state, or 'Remote'), 4) Salary/compensation if available, 5) DETAILED job description (minimum 2-3 sentences explaining responsibilities, requirements, and what the role involves). Take your time to search thoroughly and provide comprehensive details for each position. Never leave descriptions empty or vague."
           },
           {
             role: "user",
-            content: `Find current job openings: ${searchQuery}. For each job, provide: job title, company, location, salary range (if available), and brief description. Focus on real, active job postings.`
+            content: `Search extensively for current job openings: ${searchQuery}. 
+
+For EACH job posting you find, provide this complete information:
+- **Job Title:** [Full position title]
+- **Company:** [Company name]  
+- **Location:** [City, State OR Remote]
+- **Salary:** [If available, include range]
+- **Description:** [Detailed description of 2-3+ sentences covering: main responsibilities, required skills/experience, and key aspects of the role]
+
+Search thoroughly and take time to find quality listings with comprehensive details. Focus on real, active job postings from reputable sources.`
           }
         ],
-        max_tokens: 1500,
-        temperature: 0.2,
+        max_tokens: 3000, // Increased for more detailed job descriptions
+        temperature: 0.1, // Lower temperature for more accurate results
         return_citations: true,
-        search_recency_filter: "month" // Only recent postings
+        search_recency_filter: "month", // Only recent postings
+        search_domain_filter: ["indeed.com", "linkedin.com", "glassdoor.com"] // Focus on quality job sites
       };
 
       console.log('📡 Sending request to Perplexity API:', JSON.stringify(requestBody, null, 2));
@@ -231,7 +246,7 @@ class WebSearchService {
       console.log('📡 Job search content received (first 300 chars):', content.substring(0, 300));
       
       // Parse the content to extract job listings
-      const jobs = this.parseJobResults(content, query);
+      const jobs = this.parseJobResults(content, query, userProfile);
       
       // Add citation URLs if available
       if (data.citations && data.citations.length > 0) {
@@ -327,7 +342,7 @@ class WebSearchService {
   /**
    * Parse job results from Perplexity response
    */
-  private parseJobResults(content: string, originalQuery: string): JobSearchResult[] {
+  private parseJobResults(content: string, originalQuery: string, userProfile?: UserProfile): JobSearchResult[] {
     console.log('🔧 DEBUG: Parsing job results from content');
     
     const jobs: JobSearchResult[] = [];
@@ -347,7 +362,7 @@ class WebSearchService {
       if (titleMatch) {
         // Save previous job if exists
         if (currentJob.title) {
-          jobs.push(this.finalizeJob(currentJob, originalQuery));
+          jobs.push(this.finalizeJob(currentJob, originalQuery, userProfile));
         }
         
         // Start new job
@@ -376,11 +391,29 @@ class WebSearchService {
           };
         }
       }
-      // Look for location indicators
-      else if (trimmed.match(/location|located|based|office|remote/i) && currentJob.title) {
-        const locationMatch = trimmed.match(/(?:location|located|based|office):\s*(.+)|(.+?),\s*[A-Z]{2}|remote/i);
-        if (locationMatch) {
-          currentJob.location = (locationMatch[1] || locationMatch[2] || 'Remote').trim();
+      // Look for location indicators - improved patterns
+      else if (currentJob.title) {
+        // Check for explicit location patterns
+        const locationPatterns = [
+          /(?:location|located|based|office):\s*(.+)/i,
+          /(.+?),\s*[A-Z]{2}(?:\s+\d{5})?/i, // City, State format
+          /(remote|work from home|wfh)/i,
+          /in\s+([^,\n]+(?:,\s*[A-Z]{2})?)/i, // "in City, State" format
+          /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),\s*([A-Z]{2})/i // Direct City, State
+        ];
+        
+        for (const pattern of locationPatterns) {
+          const locationMatch = trimmed.match(pattern);
+          if (locationMatch) {
+            let location = locationMatch[1]?.trim() || locationMatch[0]?.trim();
+            if (location && location.toLowerCase().includes('remote')) {
+              location = 'Remote';
+            }
+            if (location && location !== currentJob.location) {
+              currentJob.location = location;
+              break;
+            }
+          }
         }
       }
       // Look for salary
@@ -390,21 +423,25 @@ class WebSearchService {
           currentJob.salary = salaryMatch[0];
         }
       }
-      // Add to description
-      else if (currentJob.title && trimmed.length > 20) {
-        currentJob.description = (currentJob.description || '') + ' ' + trimmed;
+      // Add to description - capture more detailed content
+      else if (currentJob.title && trimmed.length > 15) {
+        // Skip lines that are just metadata
+        if (!trimmed.match(/^(posted|updated|id:|ref:|source:)/i)) {
+          const separator = currentJob.description ? ' ' : '';
+          currentJob.description = (currentJob.description || '') + separator + trimmed;
+        }
       }
     }
     
     // Add the last job
     if (currentJob.title) {
-      jobs.push(this.finalizeJob(currentJob, originalQuery));
+      jobs.push(this.finalizeJob(currentJob, originalQuery, userProfile));
     }
     
     // If no jobs were parsed, create fallback jobs
     if (jobs.length === 0) {
       console.log('🔧 DEBUG: No jobs parsed, creating fallback results');
-      return this.createFallbackJobs(originalQuery, content);
+      return this.createFallbackJobs(originalQuery, content, userProfile);
     }
     
     console.log(`🔧 DEBUG: Successfully parsed ${jobs.length} jobs`);
@@ -414,13 +451,26 @@ class WebSearchService {
   /**
    * Finalize a job object with defaults and cleanup
    */
-  private finalizeJob(job: Partial<JobSearchResult>, query: string): JobSearchResult {
+  private finalizeJob(job: Partial<JobSearchResult>, query: string, userProfile?: UserProfile): JobSearchResult {
     // Clean up location by removing markdown and formatting
-    const cleanLocation = (job.location || '')
+    let cleanLocation = (job.location || '')
       .replace(/^\*\*[^*]*\*\*\s*/, '') // Remove **Location:**
       .replace(/^Location:\s*/i, '') // Remove Location:
       .replace(/^[-•*]\s*/, '') // Remove bullet points
       .trim();
+
+    // Use better location fallback based on user profile and query
+    if (!cleanLocation || cleanLocation === 'Location not specified') {
+      if (userProfile?.preferences?.remote) {
+        cleanLocation = 'Remote';
+      } else if (userProfile?.location) {
+        cleanLocation = `${userProfile.location} area`;
+      } else if (query.toLowerCase().includes('remote')) {
+        cleanLocation = 'Remote';
+      } else {
+        cleanLocation = 'Location varies';
+      }
+    }
 
     // Clean up description by removing source references and formatting
     const cleanDescription = (job.description || '')
@@ -430,12 +480,20 @@ class WebSearchService {
       .replace(/^[-•*]\s*/, '') // Remove bullet points
       .trim();
 
+    // Ensure description is never empty
+    let finalDescription = cleanDescription.substring(0, 800) || '';
+    if (!finalDescription || finalDescription.length < 50) {
+      const jobRole = job.title || 'this position';
+      const companyName = job.company || 'the company';
+      finalDescription = `This ${jobRole.toLowerCase()} role at ${companyName} offers an exciting opportunity to contribute to the team's success. The position involves key responsibilities in the field and requires relevant skills and experience. Interested candidates should contact the company directly for detailed job requirements and application procedures.`;
+    }
+
     return {
       title: job.title || 'Job Title Not Found',
       company: job.company || 'Company Not Specified',
-      location: cleanLocation || 'Location Not Specified',
+      location: cleanLocation,
       salary: job.salary,
-      description: cleanDescription.substring(0, 500) || 'Contact company for job details.',
+      description: finalDescription,
       requirements: job.requirements || [],
       url: job.url,
       posted_date: job.posted_date || new Date().toISOString(),
@@ -446,7 +504,7 @@ class WebSearchService {
   /**
    * Create fallback jobs when parsing fails
    */
-  private createFallbackJobs(query: string, content: string): JobSearchResult[] {
+  private createFallbackJobs(query: string, content: string, userProfile?: UserProfile): JobSearchResult[] {
     // Try to extract any job-like information from the content
     const hasJobInfo = content.match(/job|position|role|hiring|opening/i);
     
@@ -454,7 +512,7 @@ class WebSearchService {
       return [{
         title: `${query} positions available`,
         company: 'Various Companies',
-        location: 'Multiple Locations',
+        location: userProfile?.location ? `${userProfile.location} area` : 'Multiple Locations',
         description: 'Based on current market data, multiple positions are available. Please check job boards like Indeed, LinkedIn, and Glassdoor for specific listings.',
         requirements: [],
         match_score: 60,
@@ -468,7 +526,7 @@ class WebSearchService {
     return [{
       title: `${query} Opportunities`,
       company: 'Multiple Employers',
-      location: 'Various Locations',
+      location: userProfile?.location ? `${userProfile.location} area` : 'Various Locations',
       description: sentences.slice(0, 3).join('. ') || 'Job opportunities available in this field.',
       requirements: [],
       match_score: 65,
