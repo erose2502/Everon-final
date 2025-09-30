@@ -107,6 +107,7 @@ import type { JobSearchResult, UserProfile } from './types/job';
 import { useLiveKitVoice } from './hooks/useLiveKitVoice';
 import { ttsService } from './utils/openaiTtsService';
 import { webSearchService } from './utils/webSearchService';
+import InstallPrompt from './components/InstallPrompt';
 
 declare global {
   interface Window {
@@ -1548,6 +1549,9 @@ Use this information to provide personalized career advice and job recommendatio
           <span>Everon is speaking...</span>
         </div>
       )}
+      
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
     </div>
   );
 }

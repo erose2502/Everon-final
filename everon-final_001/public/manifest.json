@@ -1,0 +1,25 @@
+{
+  "name": "Everon - AI Career Coach",
+  "short_name": "Everon",
+  "description": "Your intelligent career coaching companion",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#6c5ce7",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/Logo icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/Logo icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
+}
