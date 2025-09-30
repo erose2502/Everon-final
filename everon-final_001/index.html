@@ -4,12 +4,28 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/vector_brian.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Everon</title>
+    <title>Everon - AI Career Coach</title>
+    <meta name="description" content="Your intelligent career coaching companion" />
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6c5ce7"/>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Everon">
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Register service worker for PWA
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      }
+    </script>
   </body>
 </html>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#000000"/>
