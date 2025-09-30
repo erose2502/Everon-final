@@ -14,9 +14,26 @@ interface ChatBubbleProps {
   isLastMessage: boolean;
   isSpeaking?: boolean;
   index?: number; // used for staggered animation timing
+  onPlayTTS?: (text: string) => void;
+  onPauseTTS?: () => void;
+  onResumeTTS?: () => void;
+  ttsEnabled?: boolean;
+  isTTSActive?: boolean;
+  isTTSPaused?: boolean;
 }
 
-const ChatBubble: React.FC<ChatBubbleProps> = ({ msg, isLastMessage, isSpeaking, index }) => {
+const ChatBubble: React.FC<ChatBubbleProps> = ({ 
+  msg, 
+  isLastMessage, 
+  isSpeaking, 
+  index, 
+  onPlayTTS, 
+  onPauseTTS, 
+  onResumeTTS, 
+  ttsEnabled, 
+  isTTSActive, 
+  isTTSPaused 
+}) => {
   // User Message Bubble
   if (msg.role === 'user') {
     return (
@@ -88,6 +105,48 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ msg, isLastMessage, isSpeaking,
             }
             return <p key={i} className="structured-paragraph">{section.content}</p>;
           })}
+          {/* TTS Controls for structured responses */}
+          {ttsEnabled && onPlayTTS && (
+            <div className="tts-controls">
+              {!isTTSActive ? (
+                <button 
+                  className="tts-btn" 
+                  onClick={() => onPlayTTS(msg.content)}
+                  title="Play with text-to-speech"
+                  disabled={isSpeaking}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </button>
+              ) : (
+                <>
+                  {!isTTSPaused ? (
+                    <button 
+                      className="tts-btn active" 
+                      onClick={onPauseTTS}
+                      title="Pause text-to-speech"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                      </svg>
+                    </button>
+                  ) : (
+                    <button 
+                      className="tts-btn paused" 
+                      onClick={onResumeTTS}
+                      title="Resume text-to-speech"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -98,7 +157,49 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ msg, isLastMessage, isSpeaking,
     <div className="chat-bubble-row assistant-row">
       <div className="chat-bubble assistant-bubble" style={{ ['--delay' as any]: `${(index ?? 0) * 60}ms` }}>
         <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-  {isLastMessage && isSpeaking && <div style={{ marginTop: 8 }}><SpeakingIndicator /></div>}
+        {isLastMessage && isSpeaking && <div style={{ marginTop: 8 }}><SpeakingIndicator /></div>}
+        {/* TTS Controls */}
+        {ttsEnabled && onPlayTTS && (
+          <div className="tts-controls">
+            {!isTTSActive ? (
+              <button 
+                className="tts-btn" 
+                onClick={() => onPlayTTS(msg.content)}
+                title="Play with text-to-speech"
+                disabled={isSpeaking}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </button>
+            ) : (
+              <>
+                {!isTTSPaused ? (
+                  <button 
+                    className="tts-btn active" 
+                    onClick={onPauseTTS}
+                    title="Pause text-to-speech"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="6" y="4" width="4" height="16"></rect>
+                      <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                  </button>
+                ) : (
+                  <button 
+                    className="tts-btn paused" 
+                    onClick={onResumeTTS}
+                    title="Resume text-to-speech"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
