@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Lottie from 'lottie-react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import dataAnalysisAnimationUrl from '../assets/Data Analysis.lottie?url';
 
 interface LottieAnimationProps {
@@ -125,16 +126,18 @@ export const SuccessCelebration: React.FC<{
           onClick={onComplete}
           aria-label="Close celebration"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          ✕
         </button>
-        <RocketSuccessAnimation 
-          autoPlay={true} 
-          loop={false}
-          onEnded={onComplete}
-          className="success-video"
-        />
+        
+        <div className="success-animation">
+          <DotLottieReact
+            src="https://lottie.host/d4372967-e745-4310-aeff-8942902fb504/gABIshYtwY.lottie"
+            loop
+            autoplay
+            style={{ width: '120px', height: '120px' }}
+          />
+        </div>
+        
         <div className="success-text">
           <h2>{title}</h2>
           <p>{message}</p>

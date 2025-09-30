@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@lottiefiles/dotlottie-react": "^0.17.2",
+    "@lottiefiles/dotlottie-react": "^0.17.3",
     "livekit-client": "^2.15.7",
     "livekit-server-sdk": "^2.13.3",
     "lottie-react": "^2.4.1",

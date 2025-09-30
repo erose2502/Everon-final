@@ -15,9 +15,6 @@ interface SpeechModeUIProps {
   isTTSSpeaking?: boolean;
   onToggleListening: () => void;
   onEndSpeechMode: () => void;
-  onFileUpload?: () => void;
-  onWebSearch?: () => void;
-  onActiveToolsChange?: (activeTools: string[]) => void;
   transcript?: string;
   error?: string | null;
   recentMessages?: Message[]; // Show recent conversation context
@@ -30,58 +27,11 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
   isTTSSpeaking = false,
   onToggleListening,
   onEndSpeechMode,
-  onFileUpload,
-  onWebSearch,
-  onActiveToolsChange,
   transcript,
   error,
   recentMessages = []
 }) => {
   const [showConversationHistory, setShowConversationHistory] = useState(false);
-  const [showWebSearchPrompt, setShowWebSearchPrompt] = useState(false);
-  const [activeTools, setActiveTools] = useState<Set<string>>(new Set());
-  const [showMultiToolPrompt, setShowMultiToolPrompt] = useState(false);
-
-  const handleToolActivation = (toolName: string) => {
-    const newActiveTools = new Set(activeTools);
-    
-    if (newActiveTools.has(toolName)) {
-      // Tool is already active, deactivate it
-      newActiveTools.delete(toolName);
-    } else {
-      // Activate the tool
-      newActiveTools.add(toolName);
-    }
-    
-    setActiveTools(newActiveTools);
-    
-    // Notify parent component of active tools
-    if (onActiveToolsChange) {
-      onActiveToolsChange(Array.from(newActiveTools));
-    }
-    
-    // Show multi-tool prompt if multiple tools are active
-    if (newActiveTools.size > 1) {
-      setShowMultiToolPrompt(true);
-      setTimeout(() => {
-        setShowMultiToolPrompt(false);
-      }, 6000);
-    } else if (newActiveTools.size === 0) {
-      setShowMultiToolPrompt(false);
-    }
-  };
-
-  const handleWebSearch = () => {
-    setShowWebSearchPrompt(true);
-    setTimeout(() => {
-      setShowWebSearchPrompt(false);
-    }, 5000);
-    handleToolActivation('websearch');
-  };
-
-  const handleFileUpload = () => {
-    handleToolActivation('fileupload');
-  };
 
   return (
     <div className="speech-mode-overlay">
@@ -131,30 +81,16 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
             )}
           </div>
 
-          {/* Multi-Tool Prompt */}
-          {showMultiToolPrompt && (
-            <div className="multi-tool-prompt">
-              <p>🛠️ <strong>Multiple Tools Active!</strong></p>
-              <p>You can now use multiple tools in your request. For example:</p>
-              <div className="tool-examples">
-                <span>"Upload my resume and search for software developer jobs"</span>
-                <span>"Search for AI trends and upload this document for analysis"</span>
-              </div>
-              <p className="tool-summary">I'll summarize results from all active tools in my response.</p>
+          {/* Recruiter Instructions */}
+          <div className="recruiter-prompt">
+            <p>🎯 <strong>Active Recruiter Mode</strong></p>
+            <p>Tell me about your background or say things like:</p>
+            <div className="recruiter-examples">
+              <span>"Find me a software developer job in New York"</span>
+              <span>"I'm looking for remote marketing roles"</span>
+              <span>"Show me data analyst positions near me"</span>
             </div>
-          )}
-
-          {/* Web Search Prompt */}
-          {showWebSearchPrompt && !showMultiToolPrompt && (
-            <div className="web-search-prompt">
-              <p>🔍 <strong>Web Search Activated!</strong></p>
-              <p>You can ask me to search the web by saying something like:</p>
-              <div className="search-examples">
-                <span>"Search for remote software developer jobs"</span>
-                <span>"Find the latest AI trends"</span>
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Status */}
           <div className="voice-status">
@@ -228,42 +164,7 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
 
           {/* Voice Controls */}
           <div className="voice-controls">
-            {/* Tool Buttons - Left Side */}
-            <div className="voice-tool-buttons">
-              {onFileUpload && (
-                <button 
-                  className={`voice-tool-btn ${activeTools.has('fileupload') ? 'active' : ''}`}
-                  onClick={handleFileUpload}
-                  title="Upload Resume/Document"
-                  disabled={isProcessing || isTTSSpeaking}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10,9 9,9 8,9"></polyline>
-                  </svg>
-                  <span>Upload File</span>
-                </button>
-              )}
-              {onWebSearch && (
-                <button 
-                  className={`voice-tool-btn ${activeTools.has('websearch') ? 'active' : ''}`}
-                  onClick={handleWebSearch}
-                  title="Web Search"
-                  disabled={isProcessing || isTTSSpeaking}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="M21 21l-4.35-4.35"></path>
-                  </svg>
-                  <span>Web Search</span>
-                </button>
-              )}
-            </div>
-
-            {/* Main Voice Control Button */}
+            {/* Main Voice Control Button - Centered */}
             <button 
               className={`voice-control-btn ${isListening ? 'active' : ''}`}
               onClick={onToggleListening}
@@ -292,7 +193,7 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
 
           {/* Instructions */}
           <div className="speech-instructions">
-            <p>💡 Speak naturally - I'll respond when you're done talking</p>
+            <p>� Tell me what kind of job you're looking for - I'll find opportunities for you!</p>
           </div>
         </div>
       </div>
