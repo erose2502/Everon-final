@@ -16,9 +16,17 @@ export default async function handler(req, res) {
     }
 
     // Get LiveKit credentials from environment
-    const livekitHost = process.env.VITE_LIVEKIT_WS_URL;
-    const apiKey = process.env.VITE_LIVEKIT_API_KEY;
-    const apiSecret = process.env.VITE_LIVEKIT_API_SECRET;
+    // Use non-VITE prefixed variables for server-side code
+    const livekitHost = process.env.LIVEKIT_WS_URL || process.env.VITE_LIVEKIT_WS_URL;
+    const apiKey = process.env.LIVEKIT_API_KEY || process.env.VITE_LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET || process.env.VITE_LIVEKIT_API_SECRET;
+
+    console.log('Environment check:', {
+      hasHost: !!livekitHost,
+      hasKey: !!apiKey,
+      hasSecret: !!apiSecret,
+      hostPreview: livekitHost?.substring(0, 20) + '...'
+    });
 
     if (!livekitHost || !apiKey || !apiSecret) {
       console.error('Missing LiveKit environment variables');
@@ -41,7 +49,7 @@ export default async function handler(req, res) {
     });
 
     // Generate JWT token
-    const jwt = token.toJwt();
+    const jwt = await token.toJwt();
 
     console.log(`Generated token for identity: ${identity}, room: ${room}`);
 
