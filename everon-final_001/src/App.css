@@ -1550,14 +1550,14 @@ body {
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .voice-circle.listening {
@@ -2061,6 +2061,47 @@ body {
   font-style: italic;
 }
 
+/* Recruiter Prompt Styles */
+.recruiter-prompt {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 20px 0;
+  text-align: center;
+  animation: slideInFromTop 0.3s ease-out;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.recruiter-prompt p:first-child {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: rgba(16, 185, 129, 0.9);
+}
+
+.recruiter-prompt p:last-of-type {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.recruiter-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recruiter-examples span {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-style: italic;
+}
+
 @keyframes slideInFromTop {
   from {
     opacity: 0;
@@ -2310,15 +2351,26 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .success-close-btn:hover {
   background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
   transform: scale(1.1);
+}
+
+.success-animation {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .success-video {
@@ -2346,6 +2398,79 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* Startup Animation Styles */
+.startup-animation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f0f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: startupFadeIn 0.5s ease-out;
+  transition: opacity 0.3s ease-out;
+}
+
+.startup-animation-overlay.fading-out {
+  opacity: 0;
+}
+
+.startup-animation-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.startup-title {
+  font-size: 48px;
+  font-weight: bold;
+  color: #ffffff;
+  margin: 20px 0 10px 0;
+  letter-spacing: 2px;
+  animation: titleSlideUp 0.8s ease-out 0.5s both;
+}
+
+.startup-subtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-weight: 300;
+  letter-spacing: 1px;
+  animation: subtitleSlideUp 0.8s ease-out 0.7s both;
+}
+
+@keyframes startupFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes titleSlideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes subtitleSlideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
 /* Responsive Speech Mode */

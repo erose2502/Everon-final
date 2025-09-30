@@ -102,6 +102,7 @@ import SpeechModeUI from './components/SpeechModeUI';
 import { SuccessCelebration, PremiumProcessingIndicator } from './components/PremiumAnimations';
 import HandoffAnimation from './components/HandoffAnimation';
 import JobSearchHandoffAnimation from './components/JobSearchHandoffAnimation';
+import StartupAnimation from './components/StartupAnimation';
 import { jobSearchService } from './utils/jobSearchService';
 import type { JobSearchResult, UserProfile } from './types/job';
 import { useLiveKitVoice } from './hooks/useLiveKitVoice';
@@ -126,6 +127,7 @@ interface Message {
 
 
 function App() {
+  const [showStartupAnimation, setShowStartupAnimation] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -301,20 +303,20 @@ function App() {
       const conversationContext = allMessages.map(msg => msg.content).join(' ').toLowerCase();
       const currentInput = transcript.toLowerCase();
       
-      // Check for job-related keywords
-      const jobKeywords = /\b(job|work|position|role|career|hire|employ|salary|company|interview|resume|cv|developer|engineer|manager|analyst)\b/;
-      const searchKeywords = /\b(search|find|look|seeking|available|openings|opportunities|market|trending|help me find|show me|get me)\b/;
+      // Enhanced recruiter-style keyword detection
+      const jobKeywords = /\b(job|jobs|work|position|positions|role|roles|career|careers|hire|hiring|employ|employment|salary|company|companies|interview|resume|cv|developer|developers|engineer|engineers|manager|managers|analyst|analysts|opportunity|opportunities)\b/;
+      const searchTriggers = /\b(find me|show me|get me|search for|look for|looking for|seeking|want|need|interested in|available|openings|hiring|recruiting)\b/;
+      const locationTriggers = /\b(near me|in|at|from|remote|hybrid|onsite|local|nearby|city|state|area)\b/;
       
-      // Check both current input and recent conversation
+      // Recruiter-focused detection - more aggressive
       const isJobRelated = jobKeywords.test(currentInput) || jobKeywords.test(conversationContext);
-      const needsWebSearch = searchKeywords.test(currentInput);
+      const hasSearchIntent = searchTriggers.test(currentInput);
+      const hasLocationContext = locationTriggers.test(currentInput);
       
-      // Also auto-search if user has been discussing job details and now asks for help
-      const hasJobContext = conversationContext.includes('role') || conversationContext.includes('position') || conversationContext.includes('job');
-      const askingForHelp = /\b(help|assist|recommend|suggest|advice|what should|can you|please)\b/.test(currentInput);
-      
-      // Automatically activate job search if conditions are met
-      const shouldAutoSearch = (isJobRelated && needsWebSearch) || (hasJobContext && askingForHelp);
+      // Auto-search triggers (recruiter behavior)
+      const shouldAutoSearch = (isJobRelated && hasSearchIntent) || 
+                              (hasSearchIntent && hasLocationContext) ||
+                              /\b(find.*job|job.*find|hiring.*near|work.*remote|position.*in)\b/.test(currentInput);
       
       if (shouldAutoSearch) {
         console.log('🤖 Auto-detected job search intent, activating web search...');
@@ -1158,6 +1160,13 @@ Use this information to provide personalized career advice and job recommendatio
 
   return (
     <div className="app-container">
+      {/* Startup Animation */}
+      {showStartupAnimation && (
+        <StartupAnimation 
+          onComplete={() => setShowStartupAnimation(false)} 
+        />
+      )}
+      
       {previewFile && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -1416,94 +1425,6 @@ Use this information to provide personalized career advice and job recommendatio
           isProcessing={isProcessingSpeech}
           isTTSSpeaking={isTTSSpeaking}
           recentMessages={messages}
-          onFileUpload={() => {
-            // Trigger file upload while keeping speech mode active
-            fileInputRef.current?.click();
-          }}
-          onWebSearch={async () => {
-            // Perform actual job search when web search tool is clicked in voice mode
-            try {
-              console.log('🔍 Voice Mode: Manual web search activated');
-              setIsSearchingJobs(true);
-              
-              // Use a generic job search query if no specific query is available
-              const searchQuery = currentTranscript || "software developer jobs remote";
-              console.log('🔍 Voice Mode: Searching with query:', searchQuery);
-              
-              const jobs = await webSearchService.searchJobs(searchQuery, userProfile || undefined);
-              
-              if (jobs && jobs.length > 0) {
-                // Set job results for carousel display (same as regular chat mode)
-                setJobResults(jobs);
-                setShowJobResults(true);
-                
-                // Create detailed voice response that reads out the positions
-                const topJobs = jobs.slice(0, 3); // Read out top 3 jobs
-                let responseMessage = `I found ${jobs.length} relevant job opportunities! Here are the top positions: `;
-                
-                topJobs.forEach((job, index) => {
-                  const jobNumber = index + 1;
-                  const salaryInfo = job.salary ? ` with salary ${job.salary}` : '';
-                  const locationInfo = job.location ? ` located in ${job.location}` : '';
-                  
-                  responseMessage += `${jobNumber}. ${job.title} at ${job.company}${salaryInfo}${locationInfo}. `;
-                  
-                  // Add brief description for the first job
-                  if (index === 0 && job.description) {
-                    const shortDesc = job.description.split('.')[0] || job.description.substring(0, 100);
-                    responseMessage += `This role involves ${shortDesc.toLowerCase()}. `;
-                  }
-                });
-                
-                if (jobs.length > 3) {
-                  responseMessage += `Plus ${jobs.length - 3} more opportunities available in the job carousel. `;
-                }
-                
-                responseMessage += `You can explore all the details in the job cards displayed above!`;
-                
-                // Add the response message and speak it
-                setMessages(prev => [...prev, { 
-                  role: 'assistant', 
-                  content: responseMessage
-                }]);
-                
-                // Speak the results out loud
-                ttsService.speak(responseMessage);
-                setIsTTSSpeaking(true);
-                
-              } else {
-                const noResultsMessage = 'I searched extensively but couldn\'t find specific job listings right now. Try asking me to search for specific roles like "Search for software developer jobs" or "Find marketing positions".';
-                
-                setMessages(prev => [...prev, { 
-                  role: 'assistant', 
-                  content: noResultsMessage
-                }]);
-                
-                // Speak the no results message
-                ttsService.speak(noResultsMessage);
-                setIsTTSSpeaking(true);
-              }
-              
-            } catch (error) {
-              console.error('Voice Mode: Web search failed:', error);
-              const errorMessage = 'I encountered an issue searching for jobs. Please try asking me to search by voice, like "Search for remote developer jobs".';
-              
-              setMessages(prev => [...prev, { 
-                role: 'assistant', 
-                content: errorMessage
-              }]);
-              
-              // Speak the error message
-              ttsService.speak(errorMessage);
-              setIsTTSSpeaking(true);
-            } finally {
-              setIsSearchingJobs(false);
-            }
-          }}
-          onActiveToolsChange={(tools) => {
-            setActiveTools(tools);
-            console.log('Active tools updated:', tools);
-          }}
           onToggleListening={async () => {
             if (livekit.isListening) {
               // Clear timeout and stop listening
