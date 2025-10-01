@@ -1,5 +1,5 @@
-// Service Worker for offline functionality
-const CACHE_NAME = 'everon-v2-' + Date.now(); // Dynamic cache name to force updates
+// Service Worker for offline functionality - Mobile-friendly caching
+const CACHE_NAME = 'everon-v4-' + Date.now(); // Dynamic cache name to force updates
 const STATIC_CACHE = 'everon-static-v2';
 
 const urlsToCache = [
