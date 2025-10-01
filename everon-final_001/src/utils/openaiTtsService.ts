@@ -99,9 +99,31 @@ class TTSService {
           reject(new Error('Audio playback error'));
         };
 
-        // Start playing
-        await this.currentAudio.play();
-        console.log('🔊 OpenAI TTS audio started playing');
+        // Start playing with mobile compatibility
+        try {
+          await this.currentAudio.play();
+          console.log('🔊 OpenAI TTS audio started playing');
+        } catch (playError: any) {
+          // Mobile browsers often block autoplay - try alternative approach
+          console.warn('🔊 Direct play failed, trying mobile-compatible approach:', playError);
+          
+          // For mobile: ensure audio context is resumed and try again
+          if (playError?.name === 'NotAllowedError') {
+            console.log('🔊 Mobile audio blocked - user interaction required');
+            // Try to play with user gesture fallback
+            this.currentAudio.muted = true;
+            try {
+              await this.currentAudio.play();
+              this.currentAudio.muted = false;
+              console.log('🔊 Mobile TTS playing after muted start');
+            } catch (secondError) {
+              console.error('🔊 Mobile TTS completely blocked:', secondError);
+              options.onError?.(new Error('Mobile audio requires user interaction'));
+            }
+          } else {
+            throw playError;
+          }
+        }
 
       } catch (error) {
         console.error('🔊 OpenAI TTS Error:', error);
