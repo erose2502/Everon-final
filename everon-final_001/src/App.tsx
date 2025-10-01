@@ -1395,16 +1395,40 @@ Use this information to provide personalized career advice and job recommendatio
           recentMessages={messages}
           language={language}
           onToggleListening={async () => {
-            if (livekit.isListening) {
-              // Clear timeout and stop listening
-              if (listeningTimeout) {
-                clearTimeout(listeningTimeout);
-                setListeningTimeout(null);
+            try {
+              if (livekit.isListening) {
+                // Clear timeout and stop listening
+                if (listeningTimeout) {
+                  clearTimeout(listeningTimeout);
+                  setListeningTimeout(null);
+                }
+                await livekit.stopListening();
+                console.log('🎤 Stopped listening');
+              } else {
+                console.log('🎤 Attempting to start listening...');
+                await livekit.startListening();
+                console.log('🎤 Started listening - manual mode');
+                
+                // Set a timeout to auto-stop listening after 30 seconds
+                const timeout = setTimeout(async () => {
+                  console.log('⏰ Auto-stopping listening after 30 seconds');
+                  await livekit.stopListening();
+                  setListeningTimeout(null);
+                }, 30000);
+                setListeningTimeout(timeout);
               }
-              await livekit.stopListening();
-            } else {
-              await livekit.startListening();
-              console.log('🎤 Started listening - manual mode');
+            } catch (error) {
+              console.error('🎤 Voice listening error:', error);
+              
+              // Show user-friendly error message
+              const errorMessage = error instanceof Error ? error.message : 'Voice recognition failed';
+              
+              // Check if it's a permission error
+              if (errorMessage.includes('permission') || errorMessage.includes('denied')) {
+                alert('🎤 Microphone Permission Required\n\nPlease:\n1. Enable microphone access in your browser\n2. Tap the microphone button again\n3. Allow permission when prompted\n\nOn mobile: Check your browser settings if needed.');
+              } else {
+                alert(`Voice recognition error: ${errorMessage}`);
+              }
             }
           }}
           onEndSpeechMode={async () => {

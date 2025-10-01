@@ -124,15 +124,56 @@ export class LiveKitVoiceAgent {
       await connectWithTimeout();
       console.log('✅ Connected to LiveKit successfully!');
       
-      // Get user media (microphone)
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000,
+      // Get user media (microphone) with mobile-friendly constraints
+      console.log('📱 Requesting microphone access...');
+      
+      // Detect mobile and adjust constraints
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      let audioConstraints: MediaStreamConstraints;
+      if (isMobile) {
+        console.log('📱 Mobile device detected, using simplified audio constraints');
+        audioConstraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: false, // Some mobile browsers have issues with this
+            autoGainControl: false,   // Some mobile browsers have issues with this
+          }
+        };
+      } else {
+        // Desktop - use higher quality settings
+        audioConstraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 48000,
+          }
+        };
+      }
+
+      try {
+        this.mediaStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+        console.log('✅ Microphone access granted successfully');
+      } catch (micError) {
+        console.error('❌ Microphone access failed:', micError);
+        const errorMessage = micError instanceof Error ? micError.message : 'Unknown error';
+        
+        // Try with even simpler constraints on mobile
+        if (isMobile) {
+          console.log('📱 Retrying with basic audio constraints...');
+          try {
+            this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('✅ Microphone access granted with basic constraints');
+          } catch (basicError) {
+            console.error('❌ Basic microphone access also failed:', basicError);
+            const basicErrorMessage = basicError instanceof Error ? basicError.message : 'Unknown error';
+            throw new Error(`Microphone permission denied. Please enable microphone access in your browser settings and try again. Error: ${basicErrorMessage}`);
+          }
+        } else {
+          throw new Error(`Microphone access failed: ${errorMessage}`);
         }
-      });
+      }
 
       // Create session
       const session: VoiceSession = {
@@ -227,19 +268,37 @@ export class LiveKitVoiceAgent {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      console.warn('Speech recognition not supported');
+      console.warn('Speech recognition not supported on this browser');
       if (this.currentSession) {
         this.currentSession.isListening = false;
       }
-      return;
+      throw new Error('Speech recognition is not supported on this browser. Please try using a different browser like Chrome or Safari.');
     }
 
     console.log('🎤 Setting up speech recognition for continuous listening...');
     
+    // Detect mobile for better error handling
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      console.log('📱 Mobile device detected - using mobile-optimized speech recognition');
+    }
+    
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    
+    // Mobile-optimized settings
+    if (isMobile) {
+      recognition.continuous = false;           // Mobile works better with single utterances
+      recognition.interimResults = false;       // Mobile has issues with interim results
+      recognition.maxAlternatives = 1;          // Reduce processing on mobile
+    } else {
+      recognition.continuous = false;           // Keep consistent across platforms
+      recognition.interimResults = false;       // More reliable
+      recognition.maxAlternatives = 3;          // Desktop can handle more alternatives
+    }
+    
     recognition.lang = this.speechLanguage;
+    
+    console.log(`🎤 Speech recognition configured for ${isMobile ? 'mobile' : 'desktop'} with language: ${this.speechLanguage}`);
 
     recognition.onstart = () => {
       console.log('🎤 Listening...');
@@ -264,7 +323,19 @@ export class LiveKitVoiceAgent {
       // Only log non-aborted errors (aborted is normal when stopping)
       if (event.error !== 'aborted') {
         console.error('🚨 Speech recognition error:', event.error);
+        
+        // Provide mobile-specific error messages
+        if (isMobile && (event.error === 'not-allowed' || event.error === 'permission-denied')) {
+          console.error('📱 Mobile microphone permission issue detected');
+          throw new Error('Microphone permission required. Please enable microphone access and try again.');
+        } else if (event.error === 'network') {
+          console.error('🌐 Network error during speech recognition');
+          throw new Error('Network error occurred. Please check your internet connection and try again.');
+        } else if (event.error === 'no-speech') {
+          console.warn('🔇 No speech detected - this is normal, will try again');
+        }
       }
+      
       if (this.currentSession) {
         this.currentSession.isListening = false;
       }
