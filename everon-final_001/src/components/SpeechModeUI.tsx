@@ -8,6 +8,74 @@ interface Message {
   content: string;
 }
 
+// Recruiter Prompt Dropdown Component
+const RecruiterPromptDropdown: React.FC = () => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const suggestions = [
+    "Find me a software developer job in New York",
+    "I'm looking for remote marketing roles", 
+    "Show me data analyst positions near me"
+  ];
+
+  const toggleDropdown = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
+    <div className="recruiter-prompt-dropdown">
+      <button 
+        className="recruiter-toggle"
+        onClick={toggleDropdown}
+        aria-expanded={isExpanded}
+      >
+        <span className="toggle-content">
+          <span className="recruiter-icon">🎯</span>
+          <span className="recruiter-text">
+            <strong>Active Recruiter Mode</strong>
+            <small>Tap for example prompts</small>
+          </span>
+        </span>
+        <svg 
+          className={`toggle-arrow ${isExpanded ? 'expanded' : ''}`}
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2"
+        >
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </button>
+      
+      {isExpanded && (
+        <div className="recruiter-dropdown-content">
+          <p className="dropdown-header">Tell me about your background or say things like:</p>
+          <div className="recruiter-suggestions">
+            {suggestions.map((suggestion, index) => (
+              <button 
+                key={index} 
+                className="suggestion-item"
+                onClick={() => {
+                  // Copy to clipboard functionality
+                  navigator.clipboard.writeText(suggestion).catch(() => {
+                    console.log('Clipboard not available');
+                  });
+                }}
+                title="Click to copy to clipboard"
+              >
+                <span className="suggestion-icon">💬</span>
+                <span className="suggestion-text">"{suggestion}"</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface SpeechModeUIProps {
   isListening: boolean;
   isSpeaking: boolean;
@@ -82,37 +150,29 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
           </div>
 
           {/* Recruiter Instructions */}
-          <div className="recruiter-prompt">
-            <p>🎯 <strong>Active Recruiter Mode</strong></p>
-            <p>Tell me about your background or say things like:</p>
-            <div className="recruiter-examples">
-              <span>"Find me a software developer job in New York"</span>
-              <span>"I'm looking for remote marketing roles"</span>
-              <span>"Show me data analyst positions near me"</span>
-            </div>
-          </div>
+          <RecruiterPromptDropdown />
 
-          {/* Status */}
-          <div className="voice-status">
-            {error ? (
-              <p className="voice-error">{error}</p>
-            ) : isProcessing ? (
-              <div className="premium-status">
-                <p>🧠 Crafting your personalized response...</p>
-                <div className="processing-dots">
-                  <span>.</span><span>.</span><span>.</span>
+          {/* Status - Only show when system is active */}
+          {(error || isProcessing || isTTSSpeaking || isSpeaking || isListening) && (
+            <div className="voice-status">
+              {error ? (
+                <p className="voice-error">{error}</p>
+              ) : isProcessing ? (
+                <div className="premium-status">
+                  <p>🧠 Crafting your personalized response...</p>
+                  <div className="processing-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                  </div>
                 </div>
-              </div>
-            ) : isTTSSpeaking ? (
-              <p>🗣️ Everon is responding...</p>
-            ) : isSpeaking ? (
-              <p>�️ Capturing your voice... keep talking!</p>
-            ) : isListening ? (
-              <p>👂 Listening... Speak naturally</p>
-            ) : (
-              <p>🗣️ Ready to listen</p>
-            )}
-          </div>
+              ) : isTTSSpeaking ? (
+                <p>🗣️ Everon is responding...</p>
+              ) : isSpeaking ? (
+                <p>�️ Capturing your voice... keep talking!</p>
+              ) : isListening ? (
+                <p>👂 Listening... Speak naturally</p>
+              ) : null}
+            </div>
+          )}
 
           {/* Current Transcript Display */}
           {transcript && (
@@ -120,6 +180,35 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
               <p>"{transcript}"</p>
             </div>
           )}
+
+          {/* Voice Controls */}
+          <div className="voice-controls">
+            {/* Main Voice Control Button - Centered */}
+            <button 
+              className={`voice-control-btn ${isListening ? 'active' : ''}`}
+              onClick={onToggleListening}
+              disabled={isSpeaking}
+            >
+              {isListening ? (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                  </svg>
+                  Stop Listening
+                </>
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                    <line x1="8" y1="22" x2="16" y2="22"></line>
+                  </svg>
+                  Start Listening
+                </>
+              )}
+            </button>
+          </div>
 
           {/* Collapsible Recent Conversation History */}
           {recentMessages.length > 0 && (
@@ -161,35 +250,6 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
               )}
             </div>
           )}
-
-          {/* Voice Controls */}
-          <div className="voice-controls">
-            {/* Main Voice Control Button - Centered */}
-            <button 
-              className={`voice-control-btn ${isListening ? 'active' : ''}`}
-              onClick={onToggleListening}
-              disabled={isSpeaking}
-            >
-              {isListening ? (
-                <>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
-                  </svg>
-                  Stop Listening
-                </>
-              ) : (
-                <>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="22"></line>
-                    <line x1="8" y1="22" x2="16" y2="22"></line>
-                  </svg>
-                  Start Listening
-                </>
-              )}
-            </button>
-          </div>
 
           {/* Instructions */}
           <div className="speech-instructions">
