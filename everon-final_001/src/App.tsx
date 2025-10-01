@@ -185,11 +185,11 @@ function App() {
   const [detectedLang, setDetectedLang] = useState<string>('en-US');  // --- Phase 3: Job Search State ---
   // Removed unused jobSearchLoading state
 
-  // LiveKit Voice Agent Configuration - Using LiveKit Cloud for development
+  // LiveKit Voice Agent Configuration - Using correct environment variables
   const livekitConfig = {
-    wsUrl: import.meta.env.VITE_LIVEKIT_WS_URL || 'wss://everon-voice-wvqs13xs.livekit.cloud',
-    apiKey: import.meta.env.VITE_LIVEKIT_API_KEY || 'API8G8zXVmRvNkB',
-    apiSecret: import.meta.env.VITE_LIVEKIT_API_SECRET || 'LbOJn8rHfJXBCF9g3sF8MNV9kGhqXmJZvYKX2QwR4Tc',
+    wsUrl: import.meta.env.VITE_LIVEKIT_WS_URL || 'wss://everon-j8bcgnfb.livekit.cloud',
+    apiKey: import.meta.env.VITE_LIVEKIT_API_KEY || 'APIbVwcHU7dWxMu',
+    apiSecret: import.meta.env.VITE_LIVEKIT_API_SECRET || 'tMcus2fal3ozu33hRvoRlUTJHex6GbX5fCYqTkLB2WbA',
     roomName: 'everon-voice-chat'
   };
 
