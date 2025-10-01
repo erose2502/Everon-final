@@ -43,11 +43,12 @@ ANALYZE THE ABOVE RESUME CONTENT - DO NOT ASK FOR MORE INFORMATION.`;
     { role: "user", content: resumePrompt }
   ];
 
+  const apiKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_OPENAI_API_KEY : '';
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: "gpt-4o",
@@ -128,6 +129,8 @@ interface Message {
 
 
 function App() {
+
+
   const [showStartupAnimation, setShowStartupAnimation] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -185,11 +188,11 @@ function App() {
   const [detectedLang, setDetectedLang] = useState<string>('en-US');  // --- Phase 3: Job Search State ---
   // Removed unused jobSearchLoading state
 
-  // LiveKit Voice Agent Configuration - Using correct environment variables
+  // LiveKit Voice Agent Configuration - Mobile-safe environment variables
   const livekitConfig = {
-    wsUrl: import.meta.env.VITE_LIVEKIT_WS_URL || 'wss://everon-j8bcgnfb.livekit.cloud',
-    apiKey: import.meta.env.VITE_LIVEKIT_API_KEY || 'APIbVwcHU7dWxMu',
-    apiSecret: import.meta.env.VITE_LIVEKIT_API_SECRET || 'tMcus2fal3ozu33hRvoRlUTJHex6GbX5fCYqTkLB2WbA',
+    wsUrl: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_LIVEKIT_WS_URL) || 'wss://everon-j8bcgnfb.livekit.cloud',
+    apiKey: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_LIVEKIT_API_KEY) || 'APIbVwcHU7dWxMu', 
+    apiSecret: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_LIVEKIT_API_SECRET) || 'tMcus2fal3ozu33hRvoRlUTJHex6GbX5fCYqTkLB2WbA',
     roomName: 'everon-voice-chat'
   };
 

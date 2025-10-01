@@ -15,7 +15,7 @@ export class JobSearchService {
   private readonly baseUrl = 'https://api.perplexity.ai/chat/completions';
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_PERPLEXITY_API_KEY;
+    this.apiKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_PERPLEXITY_API_KEY : '';
     if (!this.apiKey) {
       throw new Error('Perplexity API key not found in environment variables');
     }

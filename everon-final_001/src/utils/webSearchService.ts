@@ -45,12 +45,12 @@ class WebSearchService {
   private readonly chatUrl = 'https://api.perplexity.ai/chat/completions';
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_PERPLEXITY_API_KEY;
-    console.log('🔧 DEBUG: Raw API key from env:', import.meta.env.VITE_PERPLEXITY_API_KEY);
+    this.apiKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_PERPLEXITY_API_KEY : '';
+    console.log('🔧 DEBUG: Raw API key from env:', this.apiKey);
     
     if (!this.apiKey) {
       console.error('⚠️ VITE_PERPLEXITY_API_KEY is not set in environment variables');
-      console.error('🔧 Available env vars:', Object.keys(import.meta.env));
+      console.error('🔧 Available env vars:', typeof import.meta !== 'undefined' && import.meta.env ? Object.keys(import.meta.env) : 'import.meta.env not available');
     } else {
       console.log('✅ Perplexity API key loaded successfully:', this.apiKey.substring(0, 10) + '...');
       console.log('📡 Using Perplexity Chat API endpoint:', this.chatUrl);
