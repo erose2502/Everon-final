@@ -193,31 +193,7 @@ function App() {
     roomName: 'everon-voice-chat'
   };
 
-  // Smart listening with extended timeout for natural conversation flow
-  const startContinuousListening = async () => {
-    try {
-      // Clear any existing timeout first
-      if (listeningTimeout) {
-        clearTimeout(listeningTimeout);
-        setListeningTimeout(null);
-      }
-
-      // Ensure we're not already listening to prevent conflicts
-      if (livekit.isListening) {
-        console.log('🎤 Already listening, skipping start');
-        return;
-      }
-
-      console.log('🎤 Starting simplified continuous listening');
-      await livekit.startListening();
-      console.log('✅ Continuous listening started successfully');
-
-    } catch (error) {
-      console.error('❌ Continuous listening error:', error);
-    }
-  };
-
-  // Stop smart listening and clear timeout
+  // Manual listening mode - no auto-restart
   // TTS handler for chat bubbles
   const handleTTSPlay = async (text: string, messageIndex: number) => {
     // Stop any current TTS
@@ -537,47 +513,26 @@ INSTRUCTIONS:
               // Keep showing the AI response text instead of clearing it
               // This maintains conversation context
               
-              // Automatically restart listening after TTS completes (hands-free experience)
-              setTimeout(async () => {
-                if (speechMode && !livekit.isListening) {
-                  console.log('🎤 Auto-resuming continuous listening for hands-free conversation');
-                  setCurrentTranscript('Listening...');
-                  await startContinuousListening();
-                }
-              }, 1500); // Longer delay to let user finish their thoughts
+              // Manual mode: User must click to start listening again
+              console.log('🎤 TTS finished - waiting for user to manually start listening');
             },
             onError: (error) => {
               console.error('TTS error:', error);
               setIsTTSSpeaking(false);
               setTTSLock(false); // Release lock on error
-              // Still restart listening on TTS error
-              setTimeout(async () => {
-                if (speechMode && !livekit.isListening) {
-                  await startContinuousListening();
-                }
-              }, 1500);
+              // Manual mode: User must restart listening after TTS error
             }
           });
         } catch (ttsError) {
           console.error('TTS failed:', ttsError);
           setIsTTSSpeaking(false);
           setTTSLock(false); // Release lock on catch error
-          // Restart listening even if TTS fails
-          setTimeout(async () => {
-            if (speechMode && !livekit.isListening) {
-              await startContinuousListening();
-            }
-          }, 1500);
+          // Manual mode: User must manually restart listening
         }
       }
     } catch (error) {
       console.error('Voice agent error:', error);
-      // Restart listening on any error
-      setTimeout(async () => {
-        if (speechMode && !livekit.isListening) {
-          await startContinuousListening();
-        }
-      }, 1000);
+      // Manual mode: User must manually restart listening on error
     } finally {
       setIsProcessingSpeech(false);
       // Don't clear the transcript - keep showing conversation context
@@ -1385,12 +1340,9 @@ Use this information to provide personalized career advice and job recommendatio
                   error: livekit.error
                 });
                 
-                // Auto-start listening after session is ready
-                setTimeout(async () => {
-                  console.log('🎤 Starting auto-listen (simple approach)');
-                  setCurrentTranscript('Click Start Listening to begin');
-                  await startContinuousListening();
-                }, 2000); // Longer delay for full initialization
+                // Manual mode: User must click Start Listening
+                setCurrentTranscript('Click Start Listening to begin');
+                console.log('🎤 Voice session ready - manual mode enabled');
               }
             }}
           >
@@ -1448,7 +1400,8 @@ Use this information to provide personalized career advice and job recommendatio
               }
               await livekit.stopListening();
             } else {
-              await startContinuousListening();
+              await livekit.startListening();
+              console.log('🎤 Started listening - manual mode');
             }
           }}
           onEndSpeechMode={async () => {
