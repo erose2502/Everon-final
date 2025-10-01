@@ -18,7 +18,7 @@ export async function askOpenAIAgent(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_OPENAI_API_KEY : ''}`,
+      // openai agent utility for React (browser-side),
     },
     body: JSON.stringify({
   model: "gpt-4o",
