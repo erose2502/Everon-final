@@ -1,13 +1,35 @@
 // High-Quality Text-to-Speech Service using OpenAI TTS API
+
+
 class TTSService {
   private currentAudio: HTMLAudioElement | null = null;
+  private currentLanguage: string = 'english';
 
   constructor() {}
+
+  setLanguage(language: string) {
+    this.currentLanguage = language;
+  }
+
+  private getVoiceForLanguage(language: string): string {
+    // OpenAI TTS voices optimized for different languages
+    const voiceMap: Record<string, string> = {
+      'english': 'alloy',    // Professional female voice
+      'french': 'shimmer',   // Works well with French accent
+      'spanish': 'nova',     // Good for Spanish pronunciation  
+      'arabic': 'onyx',      // Male voice, better for Arabic
+      'swahili': 'alloy',    // Default to English voice for Swahili
+      'auto': 'alloy'        // Default
+    };
+    
+    return voiceMap[language] || 'alloy';
+  }
 
   async speak(text: string, options: {
     rate?: number;
     pitch?: number;
     volume?: number;
+    language?: string;
     onStart?: () => void;
     onEnd?: () => void;
     onError?: (error: any) => void;
@@ -25,6 +47,10 @@ class TTSService {
 
         console.log('🔊 Starting OpenAI TTS for:', cleanText.substring(0, 50) + '...');
 
+        // Select voice based on language
+        const language = options.language || this.currentLanguage;
+        const voice = this.getVoiceForLanguage(language);
+
         // Use OpenAI TTS API for high-quality voice
         const response = await fetch('https://api.openai.com/v1/audio/speech', {
           method: 'POST',
@@ -34,7 +60,7 @@ class TTSService {
           },
           body: JSON.stringify({
             model: 'tts-1-hd', // High-quality model
-            voice: 'alloy', // Professional female voice
+            voice: voice,
             input: cleanText,
             speed: options.rate ?? 1.0
           })

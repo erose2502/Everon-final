@@ -109,6 +109,7 @@ import { useLiveKitVoice } from './hooks/useLiveKitVoice';
 import { ttsService } from './utils/openaiTtsService';
 import { webSearchService } from './utils/webSearchService';
 import InstallPrompt from './components/InstallPrompt';
+import { autoDetectAndUpdateLanguage } from './utils/languageUtils';
 
 declare global {
   interface Window {
@@ -178,17 +179,17 @@ function App() {
   const [askedTopics, setAskedTopics] = useState<Set<string>>(new Set());
   const [, setConversationPhase] = useState<'greeting' | 'gathering' | 'searching' | 'advising'>('greeting');
   
-  // Language preference state
-  const [language] = useState<'english' | 'french' | 'swahili' | 'arabic' | 'spanish' | 'auto'>('english');
+  // Language preference state with auto-detection enabled
+  const [language, setLanguage] = useState<'english' | 'french' | 'swahili' | 'arabic' | 'spanish' | 'auto'>('auto');
     // For auto-detect, store last detected language
   const [detectedLang, setDetectedLang] = useState<string>('en-US');  // --- Phase 3: Job Search State ---
   // Removed unused jobSearchLoading state
 
-  // LiveKit Voice Agent Configuration
+  // LiveKit Voice Agent Configuration - Using LiveKit Cloud for development
   const livekitConfig = {
-    wsUrl: import.meta.env.VITE_LIVEKIT_WS_URL || 'wss://your-livekit-server.com',
-    apiKey: import.meta.env.VITE_LIVEKIT_API_KEY || 'your-livekit-api-key',
-    apiSecret: import.meta.env.VITE_LIVEKIT_API_SECRET || 'your-livekit-api-secret',
+    wsUrl: import.meta.env.VITE_LIVEKIT_WS_URL || 'wss://everon-voice-wvqs13xs.livekit.cloud',
+    apiKey: import.meta.env.VITE_LIVEKIT_API_KEY || 'API8G8zXVmRvNkB',
+    apiSecret: import.meta.env.VITE_LIVEKIT_API_SECRET || 'LbOJn8rHfJXBCF9g3sF8MNV9kGhqXmJZvYKX2QwR4Tc',
     roomName: 'everon-voice-chat'
   };
 
@@ -230,6 +231,7 @@ function App() {
       setCurrentTTSMessageIndex(messageIndex);
       
       await ttsService.speak(text, {
+        language: language,
         onEnd: () => {
           setIsTTSSpeaking(false);
           setCurrentTTSMessageIndex(null);
@@ -279,7 +281,17 @@ function App() {
 
   // LiveKit Voice Agent Hook - with speech recognition callback
   const livekit = useLiveKitVoice(livekitConfig, async (transcript: string) => {
-    console.log('LiveKit speech recognized:', transcript);
+    
+    // Auto-detect language from user input
+    const detectedLanguage = autoDetectAndUpdateLanguage(
+      transcript, 
+      language, 
+      (lang: string) => setLanguage(lang as any), 
+      setDetectedLang
+    );
+    
+    // Update TTS language
+    ttsService.setLanguage(detectedLanguage);
     
     // CRITICAL: Only stop listening if TTS is not currently speaking
     // This prevents interrupting AI responses mid-sentence
@@ -422,7 +434,7 @@ Context - Already discussed: Role:${hasRole ? 'Yes' : 'No'}, Location:${hasLocat
 ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. ' : ''}${nextQuestion ? `Ask: "${nextQuestion}"` : 'You have enough info - provide job recommendations or next steps.'}`;
         
         // Use the full agent for tool-enhanced responses
-        response = await askOpenAIAgent(enhancedPrompt);
+        response = await askOpenAIAgent(enhancedPrompt, undefined, detectedLanguage);
         
         // Deactivate tools after processing (single-use behavior)
         setTimeout(() => {
@@ -496,7 +508,7 @@ INSTRUCTIONS:
 - Be upbeat, use casual language, show genuine excitement about helping
 - If user asks about your creator, mention you were built by an innovative developer who wanted to help job seekers succeed`;
         
-        response = await askOpenAIVoiceAgent(contextPrompt, recentMessages);
+        response = await askOpenAIVoiceAgent(contextPrompt, recentMessages, undefined, detectedLanguage);
       }
       
       // Add user message to chat
@@ -513,6 +525,7 @@ INSTRUCTIONS:
         setTTSLock(true); // Lock to prevent interruption
         try {
           await ttsService.speak(response, {
+            language: detectedLanguage,
             onStart: () => {
               console.log('🔒 TTS started speaking - protected from interruption');
             },
@@ -570,7 +583,7 @@ INSTRUCTIONS:
       // Don't clear the transcript - keep showing conversation context
       // The transcript will be updated when the next user speaks
     }
-  });
+  }, detectedLang);
 
   // Example resume text (replace with actual resume parsing later)
 
@@ -1149,7 +1162,7 @@ Use this information to provide personalized career advice and job recommendatio
       
       const fullPrompt = context ? `${context}\nuser: ${contextualPrompt}` : contextualPrompt;
       
-      const response = await askOpenAIAgent(fullPrompt, setPartialReply);
+      const response = await askOpenAIAgent(fullPrompt, setPartialReply, language);
       
       setMessages((prev: Message[]) => [...prev, { 
         role: 'assistant', 
@@ -1425,6 +1438,7 @@ Use this information to provide personalized career advice and job recommendatio
           isProcessing={isProcessingSpeech}
           isTTSSpeaking={isTTSSpeaking}
           recentMessages={messages}
+          language={language}
           onToggleListening={async () => {
             if (livekit.isListening) {
               // Clear timeout and stop listening

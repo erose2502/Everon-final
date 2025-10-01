@@ -19,7 +19,7 @@ export interface UseLiveKitVoiceReturn {
   error: string | null;
 }
 
-export const useLiveKitVoice = (config?: LiveKitVoiceAgentConfig, onMessage?: (message: string) => void): UseLiveKitVoiceReturn => {
+export const useLiveKitVoice = (config?: LiveKitVoiceAgentConfig, onMessage?: (message: string) => void, language?: string): UseLiveKitVoiceReturn => {
   const [session, setSession] = useState<VoiceSession | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -41,6 +41,13 @@ export const useLiveKitVoice = (config?: LiveKitVoiceAgentConfig, onMessage?: (m
       voiceAgent.onSpeechRecognized = null;
     };
   }, [voiceAgent, onMessage]);
+
+  // Update speech language when it changes
+  useEffect(() => {
+    if (language) {
+      voiceAgent.setSpeechLanguage(language);
+    }
+  }, [voiceAgent, language]);
   
   // Sync state with voice agent
   useEffect(() => {

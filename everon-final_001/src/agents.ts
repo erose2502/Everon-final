@@ -1,20 +1,16 @@
 // openai agent utility for React (browser-side)
-
-const SYSTEM_PROMPT =
-  `You are Everon, a job-focused career coach. Keep responses under 40 words. 
-
-ANALYZE conversation for: job role, location, salary, experience. Only ask for missing information. If you have enough details, provide specific job advice or recommendations. Never repeat questions about information already provided.`;
-
+import { getSystemPrompt } from './utils/languageUtils';
 
 /**
  * Agent for OpenAI. Calls OpenAI directly with the user's prompt.
  */
 export async function askOpenAIAgent(
   prompt: string,
-  onStream?: (partial: string) => void
+  onStream?: (partial: string) => void,
+  language: string = 'english'
 ): Promise<string> {
   const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: getSystemPrompt(language, false) },
     { role: "user", content: prompt }
   ];
 
