@@ -9,14 +9,41 @@ interface Message {
 }
 
 // Recruiter Prompt Dropdown Component
-const RecruiterPromptDropdown: React.FC = () => {
+const RecruiterPromptDropdown: React.FC<{ language?: string }> = ({ language = 'english' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const suggestions = [
-    "Find me a software developer job in New York",
-    "I'm looking for remote marketing roles", 
-    "Show me data analyst positions near me"
-  ];
+  const getLocalizedSuggestions = (lang: string) => {
+    const suggestions = {
+      english: [
+        "Find me a software developer job in New York",
+        "I'm looking for remote marketing roles", 
+        "Show me data analyst positions near me"
+      ],
+      french: [
+        "Trouve-moi un emploi de développeur à Paris",
+        "Je cherche des postes marketing à distance",
+        "Montre-moi des postes d'analyste de données près de moi"
+      ],
+      spanish: [
+        "Encuentra un trabajo de desarrollador en Madrid",
+        "Busco puestos de marketing remoto",
+        "Muéstrame posiciones de analista de datos cerca de mí"
+      ],
+      arabic: [
+        "ابحث لي عن وظيفة مطور برمجيات في الرياض",
+        "أبحث عن وظائف تسويق عن بُعد",
+        "اعرض لي وظائف محلل بيانات قريبة مني"
+      ],
+      swahili: [
+        "Nitafutie kazi ya msanidi programu Nairobi",
+        "Natafuta kazi za uuzaji kwa mbali",
+        "Nionyeshe nafasi za mchanganuzi data karibu nami"
+      ]
+    };
+    return suggestions[lang as keyof typeof suggestions] || suggestions.english;
+  };
+
+  const suggestions = getLocalizedSuggestions(language);
 
   const toggleDropdown = () => {
     setIsExpanded(!isExpanded);
@@ -86,6 +113,7 @@ interface SpeechModeUIProps {
   transcript?: string;
   error?: string | null;
   recentMessages?: Message[]; // Show recent conversation context
+  language?: string; // Add language support
 }
 
 const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
@@ -97,7 +125,8 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
   onEndSpeechMode,
   transcript,
   error,
-  recentMessages = []
+  recentMessages = [],
+  language = 'english'
 }) => {
   const [showConversationHistory, setShowConversationHistory] = useState(false);
 
@@ -150,7 +179,7 @@ const SpeechModeUI: React.FC<SpeechModeUIProps> = ({
           </div>
 
           {/* Recruiter Instructions */}
-          <RecruiterPromptDropdown />
+          <RecruiterPromptDropdown language={language} />
 
           {/* Status - Only show when system is active */}
           {(error || isProcessing || isTTSSpeaking || isSpeaking || isListening) && (

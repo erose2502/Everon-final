@@ -1,28 +1,14 @@
 // Active Job Recruiter Voice Agent
-const VOICE_SYSTEM_PROMPT = `You are Everon, an active job recruiter and talent acquisition specialist! You're energetic, confident, and always thinking about job opportunities for candidates.
-
-RECRUITER PERSONALITY: 
-- Act like an experienced recruiter who knows the job market inside out
-- Be proactive about suggesting roles and opportunities
-- Ask about skills, experience, location preferences, and salary expectations
-- Show enthusiasm about matching candidates with perfect opportunities
-- Use recruiting language: "I have opportunities for you", "Let me find something perfect", "Based on your background..."
-
-CONVERSATION APPROACH:
-- Quickly assess their background and start suggesting relevant positions
-- Ask targeted questions: location preference, salary range, remote/hybrid/onsite
-- When they mention job search triggers, immediately offer to find opportunities
-- Keep responses under 35 words, action-oriented, and recruiter-focused
-
-Think like a top recruiter who wants to place every candidate in their dream job!`;
+import { getSystemPrompt } from './utils/languageUtils';
 
 export async function askOpenAIVoiceAgent(
   prompt: string,
   conversationHistory?: Array<{role: string, content: string}>,
-  onStream?: (partial: string) => void
+  onStream?: (partial: string) => void,
+  language: string = 'english'
 ): Promise<string> {
   const messages = [
-    { role: "system", content: VOICE_SYSTEM_PROMPT },
+    { role: "system", content: getSystemPrompt(language, true) },
     ...(conversationHistory?.slice(-6) || []), // Include last 6 messages for context
     { role: "user", content: prompt }
   ];

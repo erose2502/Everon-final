@@ -24,10 +24,16 @@ export class LiveKitVoiceAgent {
   private mediaStream: MediaStream | null = null;
   private room: Room | null = null;
   private speechRecognition: any = null;
+  private speechLanguage: string = 'en-US';
   public onSpeechRecognized: ((text: string) => void) | null = null;
   
   constructor(config: LiveKitVoiceAgentConfig) {
     this.config = config;
+  }
+
+  setSpeechLanguage(languageCode: string) {
+    this.speechLanguage = languageCode;
+    console.log(`🌍 Speech recognition language set to: ${languageCode}`);
   }
 
   private async generateAccessToken(): Promise<{ token: string; wsUrl: string }> {
@@ -103,11 +109,20 @@ export class LiveKitVoiceAgent {
       // Create LiveKit room
       this.room = new Room();
       
-      // Connect to LiveKit room
-      console.log('Connecting to LiveKit room...');
-      await this.room.connect(wsUrl, token);
+      // Connect to LiveKit room with timeout
+      console.log('🔌 Connecting to LiveKit room...');
       
-      console.log('Connected to LiveKit successfully!');
+      const connectWithTimeout = () => {
+        return Promise.race([
+          this.room!.connect(wsUrl, token),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout after 10 seconds')), 10000)
+          )
+        ]);
+      };
+
+      await connectWithTimeout();
+      console.log('✅ Connected to LiveKit successfully!');
       
       // Get user media (microphone)
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -224,10 +239,10 @@ export class LiveKitVoiceAgent {
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = 'en-US';
+    recognition.lang = this.speechLanguage;
 
     recognition.onstart = () => {
-      console.log('🎤 Speech recognition started successfully');
+      console.log('🎤 Listening...');
     };
 
     recognition.onresult = (event: any) => {
@@ -246,14 +261,16 @@ export class LiveKitVoiceAgent {
     };
 
     recognition.onerror = (event: any) => {
-      console.error('🚨 Speech recognition error:', event.error);
+      // Only log non-aborted errors (aborted is normal when stopping)
+      if (event.error !== 'aborted') {
+        console.error('🚨 Speech recognition error:', event.error);
+      }
       if (this.currentSession) {
         this.currentSession.isListening = false;
       }
     };
 
     recognition.onend = () => {
-      console.log('🔇 Speech recognition ended');
       // Don't auto-restart here - let the conversation flow handle it
     };
 
