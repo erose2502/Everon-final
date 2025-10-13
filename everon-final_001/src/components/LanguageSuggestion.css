@@ -1,0 +1,234 @@
+/* Language Suggestion Overlay */
+.language-suggestion-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.language-suggestion-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  border: 1px solid rgba(32, 178, 170, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close-btn:hover {
+  color: #20b2aa;
+  background: rgba(32, 178, 170, 0.1);
+}
+
+.language-suggestion-card h3 {
+  color: #20b2aa;
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.main-description {
+  color: #ccc;
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Language Tip Carousel */
+.language-tip-carousel {
+  position: relative;
+  height: 150px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.language-tip {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+}
+
+.language-tip.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.language-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.flag {
+  font-size: 32px;
+}
+
+.language-name {
+  color: #20b2aa;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.example-text {
+  background: rgba(32, 178, 170, 0.1);
+  border: 1px solid rgba(32, 178, 170, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 12px;
+  font-style: italic;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.description {
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Carousel Indicators */
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 25px;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background: #20b2aa;
+  transform: scale(1.2);
+}
+
+.indicator:hover {
+  background: rgba(32, 178, 170, 0.6);
+}
+
+/* Action Section */
+.action-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.how-to {
+  color: #ccc;
+  font-size: 14px;
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.how-to strong {
+  color: #20b2aa;
+}
+
+.try-now-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #20b2aa 0%, #17a2b8 100%);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(32, 178, 170, 0.3);
+}
+
+.try-now-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(32, 178, 170, 0.4);
+}
+
+.try-now-btn:active {
+  transform: translateY(0);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .language-suggestion-card {
+    padding: 25px;
+    margin: 20px;
+  }
+  
+  .language-suggestion-card h3 {
+    font-size: 22px;
+  }
+  
+  .main-description {
+    font-size: 15px;
+  }
+  
+  .flag {
+    font-size: 28px;
+  }
+  
+  .language-name {
+    font-size: 18px;
+  }
+  
+  .example-text {
+    font-size: 15px;
+    padding: 12px;
+  }
+}

@@ -17,7 +17,7 @@ export class JobSearchService {
   constructor() {
     this.apiKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_PERPLEXITY_API_KEY : '';
     if (!this.apiKey) {
-      throw new Error('Perplexity API key not found in environment variables');
+      console.warn('⚠️ Perplexity API key not found - job search features will be limited');
     }
   }
 

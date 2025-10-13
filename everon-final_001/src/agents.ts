@@ -14,17 +14,18 @@ export async function askOpenAIAgent(
     { role: "user", content: prompt }
   ];
 
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // openai agent utility for React (browser-side),
+      "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-  model: "gpt-4o",
-  messages,
-  max_tokens: 60,
-  stream: true
+      model: "gpt-4o",
+      messages,
+      max_tokens: 60,
+      stream: true
     }),
   });
 

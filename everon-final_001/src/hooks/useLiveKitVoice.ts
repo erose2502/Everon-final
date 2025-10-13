@@ -83,6 +83,13 @@ export const useLiveKitVoice = (config?: LiveKitVoiceAgentConfig, onMessage?: (m
       setIsActive(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to start voice session';
+      
+      // Don't show error for local dev limitation - just log it
+      if (errorMessage.includes('Voice chat requires deployment')) {
+        console.log('ℹ️ LiveKit unavailable in local dev - this is expected');
+        return; // Silent fail, browser speech will be used instead
+      }
+      
       setError(errorMessage);
       console.error('Voice session error:', err);
     }

@@ -37,10 +37,8 @@ export class LiveKitVoiceAgent {
   }
 
   private async generateAccessToken(): Promise<{ token: string; wsUrl: string }> {
-    // Development mode: Generate token client-side for testing
-    // In production, this should be done on your backend server
+    // Try the API endpoint (for production/Vercel deployment)
     try {
-      // First try the API endpoint (for production/Vercel)
       const response = await fetch('/api/livekit-token', {
         method: 'POST',
         headers: {
@@ -60,41 +58,13 @@ export class LiveKitVoiceAgent {
         };
       }
     } catch (error) {
-      console.log('API endpoint not available, using development mode');
+      // API not available in local development
+      console.log('LiveKit API endpoint not available - use fallback browser speech');
     }
 
-    // Development fallback: Client-side token generation (NOT for production)
-    try {
-      const { AccessToken } = await import('livekit-server-sdk');
-      
-      const token = new AccessToken(
-        this.config.apiKey,
-        this.config.apiSecret,
-        {
-          identity: `user_${Date.now()}`,
-          name: `User ${Date.now()}`,
-        }
-      );
-
-      token.addGrant({
-        roomJoin: true,
-        room: this.config.roomName,
-        canPublish: true,
-        canSubscribe: true,
-        canPublishData: true,
-      });
-
-      const jwt = await token.toJwt();
-      
-      console.log('Generated development token for LiveKit');
-      return {
-        token: jwt,
-        wsUrl: this.config.wsUrl
-      };
-    } catch (error) {
-      console.error('Development token generation failed:', error);
-      throw new Error('Failed to generate LiveKit access token. Please ensure LiveKit credentials are properly configured.');
-    }
+    // For local development: Return a dummy response that will be caught
+    // This prevents exposing API secrets in the browser
+    throw new Error('LIVEKIT_UNAVAILABLE');
   }
 
   async startVoiceSession(): Promise<VoiceSession> {
@@ -201,6 +171,12 @@ export class LiveKitVoiceAgent {
       if (this.mediaStream) {
         this.mediaStream.getTracks().forEach(track => track.stop());
         this.mediaStream = null;
+      }
+      
+      // Handle specific errors more gracefully
+      if (error instanceof Error && error.message === 'LIVEKIT_UNAVAILABLE') {
+        // Silent fail for local dev - LiveKit needs backend
+        throw new Error('Voice chat requires deployment. Using browser speech recognition instead.');
       }
       
       throw error;

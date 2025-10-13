@@ -16,7 +16,7 @@ export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
     voiceCode: 'en-US',
     speechRecognitionCode: 'en-US',
     greeting: 'Hello! I can communicate in multiple languages.',
-    systemPromptAddition: 'Automatically detect the user\'s language and respond in the same language. Support English, French, Arabic, Spanish, and Swahili.'
+    systemPromptAddition: 'Automatically detect the user\'s language and respond in the same language. Support English, French, Arabic, Spanish, Swahili, Chinese, Swedish, Twi, and Fante.'
   },
   english: {
     code: 'en',
@@ -57,6 +57,38 @@ export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
     speechRecognitionCode: 'sw-KE',
     greeting: 'Hujambo! Mimi ni Everon, mshauri wako wa kazi wa AI.',
     systemPromptAddition: 'Jibu kwa Kiswahili tu. Wewe ni mtaalamu wa ajira na ushauri wa kazi.'
+  },
+  chinese: {
+    code: 'zh',
+    name: '中文',
+    voiceCode: 'zh-CN',
+    speechRecognitionCode: 'zh-CN',
+    greeting: '你好！我是Everon，你的AI职业顾问。',
+    systemPromptAddition: '只用中文回答。你是招聘和职业咨询专家。'
+  },
+  swedish: {
+    code: 'sv',
+    name: 'Svenska',
+    voiceCode: 'sv-SE',
+    speechRecognitionCode: 'sv-SE',
+    greeting: 'Hej! Jag är Everon, din AI-karriärcoach.',
+    systemPromptAddition: 'Svara endast på svenska. Du är expert på rekrytering och karriärrådgivning.'
+  },
+  twi: {
+    code: 'tw',
+    name: 'Twi',
+    voiceCode: 'en-US', // Use English TTS as fallback for Twi
+    speechRecognitionCode: 'en-US', // Fallback to English for speech recognition
+    greeting: 'Maakye! Me din de Everon, me yɛ wo AI adwumayɛfo kafo.',
+    systemPromptAddition: 'Respond in Twi only. You are an expert in recruitment and career counseling.'
+  },
+  fante: {
+    code: 'fat',
+    name: 'Fante',
+    voiceCode: 'en-US', // Use English TTS as fallback for Fante
+    speechRecognitionCode: 'en-US', // Fallback to English for speech recognition
+    greeting: 'Mema wo akye! Me din de Everon, meyɛ wo AI adwuma kafo.',
+    systemPromptAddition: 'Respond in Fante only. You are an expert in recruitment and career counseling.'
   }
 };
 
@@ -66,6 +98,10 @@ const LANGUAGE_PATTERNS = {
   arabic: /[\u0600-\u06FF]|مرحبا|السلام|وظيفة|عمل|شغل|كيف|الحال|أهلا|مساء|صباح|الخير|شكرا|من|إلى|في|على|عن|مع|هذا|هذه|ذلك|تلك|أنا|أنت|هو|هي|نحن|أنتم|هم|هن/,
   spanish: /\b(hola|buenos|días|tardes|noches|gracias|por favor|disculpe|perdón|trabajo|empleo|puesto|carrera|español|busco|necesito|quiero|tengo|soy|estoy|en|el|la|los|las|un|una|unos|unas|de|del|por|para|con|sin|muy|más|menos|bien|mal|sí|no|qué|cómo|cuándo|dónde|quién|porque|también|pero|si|hacer|ir|venir|ser|estar|tener|haber|poder|querer|deber|decir|ver|saber)\b/i,
   swahili: /\b(hujambo|mambo|karibu|asante|sawa|pole|samahani|kazi|ajira|natafuta|ninahitaji|nina|niko|katika|kwa|na|ya|wa|la|za|cha|vya|pa|ku|mu|mimi|wewe|yeye|sisi|nyinyi|wao|nzuri|mbaya|ndio|hapana|nini|namna|lini|wapi|nani|kwa nini|pia|lakini|kama|kufanya|kwenda|kuja|kuwa|kuwepo|kuwa na|kuweza|kutaka|kulazimika|kusema|kuona|kujua)\b/i,
+  chinese: /[\u4e00-\u9fff]|你好|您好|工作|职业|职位|招聘|求职|找工作|公司|薪水|经验|技能|简历|面试|我|你|他|她|我们|你们|他们|是|有|在|的|了|和|或者|但是|如果|因为|所以|什么|怎么|什么时候|哪里|为什么|也|很|非常|好|不好|是的|不是|谢谢|请|对不起/,
+  swedish: /\b(hej|hallå|tack|ursäkta|förlåt|arbete|jobb|tjänst|karriär|svenska|söker|behöver|vill|har|är|i|på|av|för|med|utan|mycket|mer|mindre|bra|dåligt|ja|nej|vad|hur|när|var|vem|varför|också|men|om|göra|gå|komma|vara|ha|kan|ska|skulle|säga|se|veta|jag|du|han|hon|vi|ni|de)\b/i,
+  twi: /\b(maakye|maaha|mema wo akye|medaase|wo ho te sɛn|yɛ|me|wo|ɔno|yɛn|mo|wɔn|adwuma|merehwehwɛ|mehia|mepɛ|me wɔ|me yɛ|wɔ|na|ne|a|ɛ|no|saa|dabi|ɛdeɛn|ɛyɛ dɛn|berɛ bɛn|ɛhe|hwan|ɛno nti|nso|sɛ|yɛ|kɔ|ba|tena|wɔ|tumi|pɛ|ka|hwɛ|nim)\b/i,
+  fante: /\b(mema wo akye|maakye|medaase|wo ho te dɛn|yɛ|me|wo|ɔno|yɛn|mo|wɔn|edwuma|merehwehwɛ|mehia|mepɛ|me wɔ|meyɛ|wɔ|na|ne|a|ɛ|no|aane|daabi|dɛn|ɛyɛ dɛn|daa|he|hwan|nso|sɛ|yɛ|kɔ|ba|tena|wɔ|tumi|pɛ|ka|hwɛ|nim)\b/i,
   english: /\b(hello|hi|hey|good|morning|afternoon|evening|night|thanks|thank you|please|excuse me|sorry|job|work|career|position|looking|searching|need|want|have|am|is|are|in|on|at|the|a|an|and|or|but|if|to|for|with|without|very|more|less|good|bad|yes|no|what|how|when|where|who|why|also|make|go|come|be|have|can|will|should|say|see|know)\b/i
 };
 
@@ -80,6 +116,10 @@ export function detectLanguage(text: string): string {
     french: (lowerText.match(LANGUAGE_PATTERNS.french) || []).length,
     spanish: (lowerText.match(LANGUAGE_PATTERNS.spanish) || []).length,
     swahili: (lowerText.match(LANGUAGE_PATTERNS.swahili) || []).length,
+    chinese: (lowerText.match(LANGUAGE_PATTERNS.chinese) || []).length,
+    swedish: (lowerText.match(LANGUAGE_PATTERNS.swedish) || []).length,
+    twi: (lowerText.match(LANGUAGE_PATTERNS.twi) || []).length,
+    fante: (lowerText.match(LANGUAGE_PATTERNS.fante) || []).length,
     english: (lowerText.match(LANGUAGE_PATTERNS.english) || []).length
   };
   

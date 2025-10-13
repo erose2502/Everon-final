@@ -96,7 +96,7 @@ ANALYZE THE ABOVE RESUME CONTENT - DO NOT ASK FOR MORE INFORMATION.`;
 };
 import { askOpenAIVoiceAgent } from './voiceAgent';
 import ParticleBackground from './ParticleBackground';
-import ChatBubble, { StreamingBubble } from './components/ChatBubble';
+import ChatBubble from './components/ChatBubble';
 import VoiceSpectrum from './components/VoiceSpectrum';
 import SwipeableJobCards from './components/SwipeableJobCards';
 import SpeechModeUI from './components/SpeechModeUI';
@@ -104,6 +104,7 @@ import { SuccessCelebration, PremiumProcessingIndicator } from './components/Pre
 import HandoffAnimation from './components/HandoffAnimation';
 import JobSearchHandoffAnimation from './components/JobSearchHandoffAnimation';
 import StartupAnimation from './components/StartupAnimation';
+import LanguageSuggestion from './components/LanguageSuggestion';
 import { jobSearchService } from './utils/jobSearchService';
 import type { JobSearchResult, UserProfile } from './types/job';
 import { useLiveKitVoice } from './hooks/useLiveKitVoice';
@@ -130,8 +131,13 @@ interface Message {
 
 function App() {
 
+  console.log('App component rendering');
 
-  const [showStartupAnimation, setShowStartupAnimation] = useState(true);
+
+  // Set startup animation to false during debugging so the app UI appears immediately.
+  // Change back to `true` after diagnosing the blank screen issue.
+  const [showStartupAnimation, setShowStartupAnimation] = useState(false);
+  const [showLanguageSuggestion, setShowLanguageSuggestion] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -587,41 +593,58 @@ INSTRUCTIONS:
 
     console.log('sendMessage called. voiceMode:', voiceMode, 'messageToSend:', messageToSend);
 
+    // Auto-detect language from user input for regular chat (same as speech agent)
+    const detectedLanguage = autoDetectAndUpdateLanguage(
+      messageToSend,
+      language,
+      (lang: string) => setLanguage(lang as any),
+      setDetectedLang
+    );
+    
+    console.log('🌍 Detected language for this message:', detectedLanguage);
+
     setMessages((prev: Message[]) => [...prev, { role: 'user', content: messageToSend }]);
     setInput('');
     setLoading(true);
     setPartialReply('');
 
-    // Compose language instruction, using detectedLang if auto
+    // Use detected language for the response
     let languageInstruction = '';
-    let langForPrompt = language;
-    if (language === 'auto') {
-      if (detectedLang.startsWith('fr')) langForPrompt = 'french';
-      else if (detectedLang.startsWith('sw')) langForPrompt = 'swahili';
-      else if (detectedLang.startsWith('ar')) langForPrompt = 'arabic';
-      else if (detectedLang.startsWith('es')) langForPrompt = 'spanish';
-      else langForPrompt = 'english';
-    }
-    switch (langForPrompt) {
+    switch (detectedLanguage) {
       case 'french':
-        languageInstruction = 'Please respond in French.';
+        languageInstruction = 'Répondez en français uniquement.';
         break;
       case 'swahili':
-        languageInstruction = 'Please respond in Swahili.';
+        languageInstruction = 'Jibu kwa Kiswahili tu.';
         break;
       case 'arabic':
-        languageInstruction = 'Please respond in Arabic.';
+        languageInstruction = 'الرد باللغة العربية فقط.';
         break;
       case 'spanish':
-        languageInstruction = 'Please respond in Spanish.';
+        languageInstruction = 'Responde solo en español.';
+        break;
+      case 'twi':
+        languageInstruction = 'Please respond in Twi only.';
+        break;
+      case 'fante':
+        languageInstruction = 'Please respond in Fante only.';
         break;
       default:
         languageInstruction = 'Please respond in English.';
     }
+    
+    console.log('📝 Language instruction:', languageInstruction);
 
     try {
-      // Use the enhanced message processing
-      await processMessage(languageInstruction + '\n' + messageToSend);
+      // Now process the message (AI starts thinking) - get the response
+      const aiResponse = await processMessage(languageInstruction + '\n' + messageToSend, detectedLanguage);
+      
+      // Add the assistant message immediately when AI response is ready
+      console.log('✅ AI response ready, adding to chat...');
+      setMessages((prev: Message[]) => [...prev, { 
+        role: 'assistant', 
+        content: aiResponse 
+      }]);
       
       // If in voice mode, automatically start listening again after response
       if (voiceModeRef.current) {
@@ -996,7 +1019,7 @@ INSTRUCTIONS:
   };
 
   // Enhanced message processing with webSearchService integration
-  const processMessage = async (messageToSend: string) => {
+  const processMessage = async (messageToSend: string, detectedLanguage?: string): Promise<string> => {
     // Check if we're in job search mode or if this is a job search request
     let isJobSearchRequest = jobSearchMode;
     
@@ -1120,13 +1143,19 @@ Use this information to provide personalized career advice and job recommendatio
       
       const fullPrompt = context ? `${context}\nuser: ${contextualPrompt}` : contextualPrompt;
       
-      const response = await askOpenAIAgent(fullPrompt, setPartialReply, language);
+      // Use the detected language passed from sendMessage, or fall back to current language state
+      const langToUse = detectedLanguage || language;
       
-      setMessages((prev: Message[]) => [...prev, { 
-        role: 'assistant', 
-        content: response 
-      }]);
+      console.log('🔤 Using language for AI response:', langToUse);
+      
+      const response = await askOpenAIAgent(fullPrompt, setPartialReply, langToUse);
+      
+      // Return the response instead of adding to messages
+      // The sendMessage function will add it after the delay
+      return response;
     }
+    
+    return ''; // Fallback return
   };
 
   return (
@@ -1136,6 +1165,11 @@ Use this information to provide personalized career advice and job recommendatio
         <StartupAnimation 
           onComplete={() => setShowStartupAnimation(false)} 
         />
+      )}
+      
+      {/* Language Suggestion Modal */}
+      {showLanguageSuggestion && (
+        <LanguageSuggestion onClose={() => setShowLanguageSuggestion(false)} />
       )}
       
       {previewFile && (
@@ -1196,7 +1230,6 @@ Use this information to provide personalized career advice and job recommendatio
               isTTSPaused={currentTTSMessageIndex === idx && isTTSPaused}
             />
           ))}
-          {loading && partialReply && !voiceMode && messages[messages.length - 1]?.role !== 'assistant' && <StreamingBubble partialReply={partialReply} />}
           
           {/* Job Search Results */}
           {showJobResults && jobResults.length > 0 && (
@@ -1296,6 +1329,24 @@ Use this information to provide personalized career advice and job recommendatio
                     <circle cx="12" cy="10" r="3"></circle>
                   </svg>
                   <span>{jobSearchMode ? '🎯 Job Mode ON' : 'Find Jobs'}</span>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className="dropdown-item"
+                  onClick={() => {
+                    setShowLanguageSuggestion(true);
+                    setShowDropdown(false);
+                  }}
+                  title="Learn about language support"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                  </svg>
+                  <span>🌍 Languages</span>
                 </button>
               </div>
             )}
