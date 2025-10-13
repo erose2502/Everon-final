@@ -2539,6 +2539,16 @@ body {
   animation: subtitleSlideUp 0.8s ease-out 0.7s both;
 }
 
+.startup-author {
+  font-size: 14px;
+  color: rgba(32, 178, 170, 0.8);
+  margin: 15px 0 0 0;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  animation: authorSlideUp 0.8s ease-out 0.9s both;
+  font-style: italic;
+}
+
 @keyframes startupFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -2559,6 +2569,17 @@ body {
   from { 
     opacity: 0; 
     transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes authorSlideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(15px); 
   }
   to { 
     opacity: 1; 

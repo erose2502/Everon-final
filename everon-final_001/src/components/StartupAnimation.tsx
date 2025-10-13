@@ -40,6 +40,7 @@ const StartupAnimation: React.FC<StartupAnimationProps> = ({ onComplete }) => {
         />
         <h1 className="startup-title">Everon</h1>
         <p className="startup-subtitle">AI Career Coach</p>
+        <p className="startup-author">Created by Elijah Rose</p>
       </div>
     </div>
   );

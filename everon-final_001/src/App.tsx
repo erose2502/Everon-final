@@ -134,9 +134,8 @@ function App() {
   console.log('App component rendering');
 
 
-  // Set startup animation to false during debugging so the app UI appears immediately.
-  // Change back to `true` after diagnosing the blank screen issue.
-  const [showStartupAnimation, setShowStartupAnimation] = useState(false);
+  // Startup animation enabled - shows the beautiful opening animation when app loads
+  const [showStartupAnimation, setShowStartupAnimation] = useState(true);
   const [showLanguageSuggestion, setShowLanguageSuggestion] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
