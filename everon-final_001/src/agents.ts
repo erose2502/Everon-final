@@ -7,10 +7,11 @@ import { getSystemPrompt } from './utils/languageUtils';
 export async function askOpenAIAgent(
   prompt: string,
   onStream?: (partial: string) => void,
-  language: string = 'english'
+  language: string = 'english',
+  userName?: string
 ): Promise<string> {
   const messages = [
-    { role: "system", content: getSystemPrompt(language, false) },
+    { role: "system", content: getSystemPrompt(language, false, userName) },
     { role: "user", content: prompt }
   ];
 

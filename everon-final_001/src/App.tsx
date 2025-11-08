@@ -97,6 +97,7 @@ ANALYZE THE ABOVE RESUME CONTENT - DO NOT ASK FOR MORE INFORMATION.`;
 import { askOpenAIVoiceAgent } from './voiceAgent';
 import ParticleBackground from './ParticleBackground';
 import ChatBubble from './components/ChatBubble';
+import ThinkingAnimation from './components/ThinkingAnimation';
 import VoiceSpectrum from './components/VoiceSpectrum';
 import SwipeableJobCards from './components/SwipeableJobCards';
 import SpeechModeUI from './components/SpeechModeUI';
@@ -106,11 +107,18 @@ import JobSearchHandoffAnimation from './components/JobSearchHandoffAnimation';
 import StartupAnimation from './components/StartupAnimation';
 import LanguageSuggestion from './components/LanguageSuggestion';
 import { jobSearchService } from './utils/jobSearchService';
-import type { JobSearchResult, UserProfile } from './types/job';
+import type { JobSearchResult } from './types/job'
+import type { UserProfile as JobUserProfile } from './types/job';
 import { useLiveKitVoice } from './hooks/useLiveKitVoice';
+import { useAuth } from './hooks/useAuth';
 import { ttsService } from './utils/openaiTtsService';
 import { webSearchService } from './utils/webSearchService';
+import { autoSaveChatSession } from './services/chatHistoryService';
 import InstallPrompt from './components/InstallPrompt';
+import AuthModal from './components/AuthModal';
+import UserMenu from './components/UserMenu';
+import ChatHistorySidebar from './components/ChatHistorySidebar';
+import LanguageSettings from './components/LanguageSettings';
 import { autoDetectAndUpdateLanguage } from './utils/languageUtils';
 
 declare global {
@@ -155,7 +163,6 @@ function App() {
   
   // Job search related state
   const [jobResults, setJobResults] = useState<JobSearchResult[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [hasUploadedResume, setHasUploadedResume] = useState(false);
   const [isSearchingJobs, setIsSearchingJobs] = useState(false);
   const [showJobResults, setShowJobResults] = useState(false);
@@ -173,6 +180,13 @@ function App() {
   const [hasUsedSpeechMode, setHasUsedSpeechMode] = useState(false);
   const [isTTSSpeaking, setIsTTSSpeaking] = useState(false);
   const [currentTTSMessageIndex, setCurrentTTSMessageIndex] = useState<number | null>(null);
+  
+  // Authentication state
+  const { user, userProfile } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showChatHistory, setShowChatHistory] = useState(false);
+  const [showLanguageSettings, setShowLanguageSettings] = useState(false);
   const [isTTSPaused, setIsTTSPaused] = useState(false);
   const [listeningTimeout, setListeningTimeout] = useState<number | null>(null);
   const [ttsLock, setTTSLock] = useState(false); // Prevent TTS interruption
@@ -187,10 +201,15 @@ function App() {
   const [askedTopics, setAskedTopics] = useState<Set<string>>(new Set());
   const [, setConversationPhase] = useState<'greeting' | 'gathering' | 'searching' | 'advising'>('greeting');
   
-  // Language preference state with auto-detection enabled
+  // Language preference state - will be synced with user profile
   const [language, setLanguage] = useState<'english' | 'french' | 'swahili' | 'arabic' | 'spanish' | 'auto'>('auto');
     // For auto-detect, store last detected language
-  const [detectedLang, setDetectedLang] = useState<string>('en-US');  // --- Phase 3: Job Search State ---
+  const [detectedLang, setDetectedLang] = useState<string>('en-US');
+  
+  // Job profile state - separate from auth user profile
+  const [jobProfile, setJobProfile] = useState<JobUserProfile | null>(null);
+  
+  // --- Phase 3: Job Search State ---
   // Removed unused jobSearchLoading state
 
   // LiveKit Voice Agent Configuration - Mobile-safe environment variables
@@ -263,16 +282,48 @@ function App() {
     setShowDropdown(false);
   };
 
+  // Logout handler
+  const handleLogout = () => {
+    setMessages([]);
+    setCurrentSessionId(null);
+    // Auth service logout will be called by UserMenu component
+  };
+
+  // Load chat session from history
+  const handleLoadSession = (sessionId: string, messages: any[]) => {
+    setCurrentSessionId(sessionId);
+    setMessages(messages);
+  };
+
+  // Start new chat
+  const handleNewChat = () => {
+    setMessages([]);
+    setCurrentSessionId(null);
+    setJobResults([]);
+    
+    // Show welcome message if user is logged in
+    if (user) {
+      const firstName = user.displayName?.split(' ')[0] || 'there';
+      const welcomeMessage: Message = {
+        role: 'assistant',
+        content: `Hi ${firstName}! 👋 Ready for a new conversation! What would you like to work on today?`
+      };
+      setMessages([welcomeMessage]);
+    }
+  };
+
   // LiveKit Voice Agent Hook - with speech recognition callback
   const livekit = useLiveKitVoice(livekitConfig, async (transcript: string) => {
     
-    // Auto-detect language from user input
-    const detectedLanguage = autoDetectAndUpdateLanguage(
-      transcript, 
-      language, 
-      (lang: string) => setLanguage(lang as any), 
-      setDetectedLang
-    );
+    // Only auto-detect language if user's preference is 'auto', otherwise use their preferred language
+    const detectedLanguage = userProfile?.preferences?.language && userProfile.preferences.language !== 'auto'
+      ? userProfile.preferences.language // Force user's preferred language
+      : autoDetectAndUpdateLanguage(
+          transcript, 
+          language, 
+          (lang: string) => setLanguage(lang as any), 
+          setDetectedLang
+        );
     
     // Update TTS language
     ttsService.setLanguage(detectedLanguage);
@@ -343,7 +394,7 @@ function App() {
               const trends = await webSearchService.getJobMarketTrends();
               searchResults = `Top 2 trending roles: ${trends.slice(0, 2).map(t => t.title).join(', ')}. `;
             } else {
-              const jobs = await webSearchService.searchJobs(transcript, userProfile || undefined);
+              const jobs = await webSearchService.searchJobs(transcript, jobProfile || undefined);
               
               // Set job results for carousel display (same as regular chat mode)
               if (jobs && jobs.length > 0) {
@@ -418,7 +469,8 @@ Context - Already discussed: Role:${hasRole ? 'Yes' : 'No'}, Location:${hasLocat
 ${shouldAutoSearch ? 'I automatically searched for jobs based on your request. ' : ''}${nextQuestion ? `Ask: "${nextQuestion}"` : 'You have enough info - provide job recommendations or next steps.'}`;
         
         // Use the full agent for tool-enhanced responses
-        response = await askOpenAIAgent(enhancedPrompt, undefined, detectedLanguage);
+        const userName = user?.displayName?.split(' ')[0];
+        response = await askOpenAIAgent(enhancedPrompt, undefined, detectedLanguage, userName);
         
         // Deactivate tools after processing (single-use behavior)
         setTimeout(() => {
@@ -492,7 +544,8 @@ INSTRUCTIONS:
 - Be upbeat, use casual language, show genuine excitement about helping
 - If user asks about your creator, mention you were built by an innovative developer who wanted to help job seekers succeed`;
         
-        response = await askOpenAIVoiceAgent(contextPrompt, recentMessages, undefined, detectedLanguage);
+        const userName = user?.displayName?.split(' ')[0];
+        response = await askOpenAIVoiceAgent(contextPrompt, recentMessages, undefined, detectedLanguage, userName);
       }
       
       // Add user message to chat
@@ -561,6 +614,18 @@ INSTRUCTIONS:
     voiceModeRef.current = voiceMode;
   }, [voiceMode]);
 
+  // Sync language preference from user profile
+  useEffect(() => {
+    if (userProfile?.preferences?.language) {
+      const preferredLang = userProfile.preferences.language;
+      // Only update if it's a valid language option
+      if (['english', 'french', 'swahili', 'arabic', 'spanish', 'chinese', 'swedish', 'portuguese', 'hindi', 'german', 'japanese', 'korean', 'auto'].includes(preferredLang)) {
+        setLanguage(preferredLang as any);
+        console.log(`🌍 User's preferred language set to: ${preferredLang}`);
+      }
+    }
+  }, [userProfile]);
+
   // Cleanup listening timeout on component unmount
   useEffect(() => {
     return () => {
@@ -570,6 +635,35 @@ INSTRUCTIONS:
       ttsService.stop();
     };
   }, [listeningTimeout]);
+
+  // Auto-save chat history when messages change and user is authenticated
+  useEffect(() => {
+    if (user && messages.length > 0) {
+      autoSaveChatSession(
+        user.uid,
+        messages,
+        language,
+        currentSessionId || undefined
+      );
+      // Generate session ID on first save if not exists
+      if (!currentSessionId && messages.length > 0) {
+        const newSessionId = `${user.uid}_${Date.now()}`;
+        setCurrentSessionId(newSessionId);
+      }
+    }
+  }, [messages, user, language, currentSessionId]);
+
+  // Welcome message when user logs in
+  useEffect(() => {
+    if (user && messages.length === 0) {
+      const firstName = user.displayName?.split(' ')[0] || 'there';
+      const welcomeMessage: Message = {
+        role: 'assistant',
+        content: `Hi ${firstName}! 👋 It's great to see you again! I'm Everon, your AI career coach. I'm here to help you with resume reviews, job searching, interview prep, career advice, and more. What would you like to work on today?`
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [user]);
 
   // Handle clicks outside dropdown to close it
   useEffect(() => {
@@ -622,11 +716,20 @@ INSTRUCTIONS:
       case 'spanish':
         languageInstruction = 'Responde solo en español.';
         break;
-      case 'twi':
-        languageInstruction = 'Please respond in Twi only.';
+      case 'portuguese':
+        languageInstruction = 'Responda apenas em português.';
         break;
-      case 'fante':
-        languageInstruction = 'Please respond in Fante only.';
+      case 'hindi':
+        languageInstruction = 'केवल हिंदी में जवाब दें।';
+        break;
+      case 'german':
+        languageInstruction = 'Antworte nur auf Deutsch.';
+        break;
+      case 'japanese':
+        languageInstruction = '日本語のみで回答してください。';
+        break;
+      case 'korean':
+        languageInstruction = '한국어로만 답변하세요.';
         break;
       default:
         languageInstruction = 'Please respond in English.';
@@ -832,7 +935,7 @@ INSTRUCTIONS:
     }, 3000); // Extended to 3 seconds per message
     
     // Store interval ID to clear later
-    setHandoffInterval(interval);
+    setHandoffInterval(interval as unknown as number);
     let parsedText = '';
 
     try {
@@ -874,7 +977,7 @@ INSTRUCTIONS:
       try {
         const extractedProfile = jobSearchService.extractUserProfile(parsedText);
         console.log('📋 Extracted user profile from resume:', extractedProfile);
-        setUserProfile(extractedProfile);
+        setJobProfile(extractedProfile);
         setHasUploadedResume(true);
       } catch (profileError) {
         console.warn('⚠️ Could not extract profile from resume:', profileError);
@@ -896,8 +999,8 @@ INSTRUCTIONS:
       // Automatically suggest job search after resume analysis
       setTimeout(() => {
         const jobSuggestionMessage = speechMode 
-          ? `🎯 Excellent! I've successfully analyzed your resume and extracted your professional profile. I now understand your background as a ${userProfile?.jobTitle || 'professional'} with ${userProfile?.experience || 'valuable experience'} in your field. Your resume is now ready and I can use it to find personalized job opportunities. You can now ask me to search for jobs by saying something like "Find me jobs" or "Search for positions in my field", and I'll use your resume information to find the best matches!`
-          : `🎯 Perfect! I've analyzed your resume and extracted your profile. Would you like me to find job opportunities that match your background in ${userProfile?.jobTitle || 'your field'}? Just type "find jobs" or click the job search button to get started!`;
+          ? `🎯 Excellent! I've successfully analyzed your resume and extracted your professional profile. I now understand your background as a ${jobProfile?.jobTitle || 'professional'} with ${jobProfile?.experience || 'valuable experience'} in your field. Your resume is now ready and I can use it to find personalized job opportunities. You can now ask me to search for jobs by saying something like "Find me jobs" or "Search for positions in my field", and I'll use your resume information to find the best matches!`
+          : `🎯 Perfect! I've analyzed your resume and extracted your profile. Would you like me to find job opportunities that match your background in ${jobProfile?.jobTitle || 'your field'}? Just type "find jobs" or click the job search button to get started!`;
           
         setMessages((prev: Message[]) => [...prev, { 
           role: 'assistant', 
@@ -950,11 +1053,11 @@ INSTRUCTIONS:
       
       if (resumeContent) {
         const profile = jobSearchService.extractUserProfile(resumeContent);
-        setUserProfile(profile);
+        setJobProfile(profile);
       }
     }
 
-    if (!userProfile && !query && !hasUploadedResume) {
+    if (!jobProfile && !query && !hasUploadedResume) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: 'I need to know more about your background to search for relevant jobs. Please share your resume or tell me about your skills and experience!' 
@@ -971,7 +1074,7 @@ INSTRUCTIONS:
 
     try {
       const results = await jobSearchService.searchJobs(
-        userProfile || {
+        jobProfile || {
           skills: [],
           experience: 'Mid-level',
           location: 'Remote',
@@ -1065,8 +1168,8 @@ INSTRUCTIONS:
         
         // Use webSearchService for real-time job search
         console.log('🔍 Starting job search with webSearchService for query:', searchQuery);
-        console.log('👤 Using user profile:', userProfile);
-        const jobResults = await webSearchService.searchJobs(searchQuery, userProfile || undefined);
+        console.log('👤 Using job profile:', jobProfile);
+        const jobResults = await webSearchService.searchJobs(searchQuery, jobProfile || undefined);
         
         if (jobResults && jobResults.length > 0) {
           console.log('✅ Found', jobResults.length, 'job results');
@@ -1129,12 +1232,12 @@ INSTRUCTIONS:
       
       // Add resume context if available
       let contextualPrompt = messageToSend;
-      if (hasUploadedResume && userProfile) {
+      if (hasUploadedResume && jobProfile) {
         const profileContext = `\n\nCONTEXT: The user has uploaded their resume. Their background includes:
-- Skills: ${userProfile.skills?.join(', ') || 'Not specified'}
-- Experience Level: ${userProfile.experience || 'Not specified'}
-- Job Title: ${userProfile.jobTitle || 'Not specified'}
-- Location Preference: ${userProfile.location || 'Not specified'}
+- Skills: ${jobProfile.skills?.join(', ') || 'Not specified'}
+- Experience Level: ${jobProfile.experience || 'Not specified'}
+- Job Title: ${jobProfile.jobTitle || 'Not specified'}
+- Location Preference: ${jobProfile.location || 'Not specified'}
 
 Use this information to provide personalized career advice and job recommendations.`;
         contextualPrompt = messageToSend + profileContext;
@@ -1147,7 +1250,8 @@ Use this information to provide personalized career advice and job recommendatio
       
       console.log('🔤 Using language for AI response:', langToUse);
       
-      const response = await askOpenAIAgent(fullPrompt, setPartialReply, langToUse);
+      const userName = user?.displayName?.split(' ')[0];
+      const response = await askOpenAIAgent(fullPrompt, setPartialReply, langToUse, userName);
       
       // Return the response instead of adding to messages
       // The sendMessage function will add it after the delay
@@ -1187,10 +1291,51 @@ Use this information to provide personalized career advice and job recommendatio
   <ParticleBackground isSpeaking={isSpeaking} />
       <main className="main-content">
 
+        {/* Chat History Button (only show when user is logged in) */}
+        {user && (
+          <button 
+            className="chat-history-btn"
+            onClick={() => setShowChatHistory(true)}
+            title="Chat History"
+          >
+            ☰
+          </button>
+        )}
+
         <header className="app-header">
           <h1>Everon</h1>
-          <h2>Your AI Career Coach</h2>
-          <p>Ask Everon about your career questions!</p>
+          <h2>
+            {user ? (
+              <>Welcome back, {user.displayName?.split(' ')[0] || 'there'}! 👋</>
+            ) : (
+              <>Your AI Career Coach</>
+            )}
+          </h2>
+          <p>
+            {user ? (
+              <>I'm here to help you achieve your career goals!</>
+            ) : (
+              <>Ask Everon about your career questions!</>
+            )}
+          </p>
+          
+          {/* Authentication UI */}
+          <div className="auth-controls">
+            {user ? (
+              <UserMenu 
+                user={user} 
+                onLogout={handleLogout}
+                onLanguageSettings={() => setShowLanguageSettings(true)}
+              />
+            ) : (
+              <button 
+                className="auth-btn"
+                onClick={() => setShowAuthModal(true)}
+              >
+                Log In
+              </button>
+            )}
+          </div>
         </header>
 
         <div className="chat-window">
@@ -1229,6 +1374,11 @@ Use this information to provide personalized career advice and job recommendatio
               isTTSPaused={currentTTSMessageIndex === idx && isTTSPaused}
             />
           ))}
+          
+          {/* AI Thinking Animation */}
+          {loading && !partialReply && (
+            <ThinkingAnimation />
+          )}
           
           {/* Job Search Results */}
           {showJobResults && jobResults.length > 0 && (
@@ -1465,7 +1615,7 @@ Use this information to provide personalized career advice and job recommendatio
                   await livekit.stopListening();
                   setListeningTimeout(null);
                 }, 30000);
-                setListeningTimeout(timeout);
+                setListeningTimeout(timeout as unknown as number);
               }
             } catch (error) {
               console.error('🎤 Voice listening error:', error);
@@ -1517,6 +1667,39 @@ Use this information to provide personalized career advice and job recommendatio
       
       {/* PWA Install Prompt */}
       <InstallPrompt />
+      
+      {/* Authentication Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={() => {
+            setShowAuthModal(false);
+          }}
+        />
+      )}
+
+      {/* Chat History Sidebar */}
+      <ChatHistorySidebar
+        user={user}
+        isOpen={showChatHistory}
+        onClose={() => setShowChatHistory(false)}
+        onLoadSession={handleLoadSession}
+        onNewChat={handleNewChat}
+        currentSessionId={currentSessionId}
+      />
+
+      {/* Language Settings Modal */}
+      {showLanguageSettings && user && (
+        <LanguageSettings
+          user={user}
+          currentLanguage={userProfile?.preferences?.language || language}
+          onClose={() => setShowLanguageSettings(false)}
+          onLanguageChange={(newLang) => {
+            setLanguage(newLang as any);
+            console.log(`🌍 Language preference updated to: ${newLang}`);
+          }}
+        />
+      )}
     </div>
   );
 }

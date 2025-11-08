@@ -49,7 +49,7 @@ export const useLiveKitVoice = (config?: LiveKitVoiceAgentConfig, onMessage?: (m
     }
   }, [voiceAgent, language]);
   
-  // Sync state with voice agent
+  // Sync state with voice agent - immediate updates instead of polling
   useEffect(() => {
     const updateState = () => {
       const currentSession = voiceAgent.getCurrentSession();
@@ -59,20 +59,11 @@ export const useLiveKitVoice = (config?: LiveKitVoiceAgentConfig, onMessage?: (m
       setIsSpeaking(voiceAgent.isSpeaking());
     };
     
-    // Update state every 100ms while active
-    let interval: number | null = null;
-    if (voiceAgent.isActive()) {
-      interval = setInterval(updateState, 100);
-    }
-    
     // Initial update
     updateState();
     
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
+    // No polling interval - state updates happen via callbacks instead
+    // This eliminates the 100ms delay
   }, [voiceAgent, isActive]);
   
   const startVoiceSession = useCallback(async () => {
@@ -117,11 +108,12 @@ export const useLiveKitVoice = (config?: LiveKitVoiceAgentConfig, onMessage?: (m
     
     try {
       setError(null);
+      setIsListening(true); // Immediate UI update
       await voiceAgent.startListening();
-      setIsListening(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to start listening';
       setError(errorMessage);
+      setIsListening(false);
       console.error('Start listening error:', err);
     }
   }, [voiceAgent, isActive, startVoiceSession]);

@@ -16,7 +16,7 @@ export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
     voiceCode: 'en-US',
     speechRecognitionCode: 'en-US',
     greeting: 'Hello! I can communicate in multiple languages.',
-    systemPromptAddition: 'Automatically detect the user\'s language and respond in the same language. Support English, French, Arabic, Spanish, Swahili, Chinese, Swedish, Twi, and Fante.'
+    systemPromptAddition: 'Automatically detect the user\'s language and respond in the same language. Support English, French, Arabic, Spanish, Swahili, Chinese, Swedish, Portuguese, Hindi, German, Japanese, and Korean.'
   },
   english: {
     code: 'en',
@@ -74,21 +74,45 @@ export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
     greeting: 'Hej! Jag är Everon, din AI-karriärcoach.',
     systemPromptAddition: 'Svara endast på svenska. Du är expert på rekrytering och karriärrådgivning.'
   },
-  twi: {
-    code: 'tw',
-    name: 'Twi',
-    voiceCode: 'en-US', // Use English TTS as fallback for Twi
-    speechRecognitionCode: 'en-US', // Fallback to English for speech recognition
-    greeting: 'Maakye! Me din de Everon, me yɛ wo AI adwumayɛfo kafo.',
-    systemPromptAddition: 'Respond in Twi only. You are an expert in recruitment and career counseling.'
+  portuguese: {
+    code: 'pt',
+    name: 'Português',
+    voiceCode: 'pt-BR',
+    speechRecognitionCode: 'pt-BR',
+    greeting: 'Olá! Eu sou Everon, seu coach de carreira com IA.',
+    systemPromptAddition: 'Responda apenas em português. Você é um especialista em recrutamento e aconselhamento de carreira.'
   },
-  fante: {
-    code: 'fat',
-    name: 'Fante',
-    voiceCode: 'en-US', // Use English TTS as fallback for Fante
-    speechRecognitionCode: 'en-US', // Fallback to English for speech recognition
-    greeting: 'Mema wo akye! Me din de Everon, meyɛ wo AI adwuma kafo.',
-    systemPromptAddition: 'Respond in Fante only. You are an expert in recruitment and career counseling.'
+  hindi: {
+    code: 'hi',
+    name: 'हिन्दी',
+    voiceCode: 'hi-IN',
+    speechRecognitionCode: 'hi-IN',
+    greeting: 'नमस्ते! मैं एवरॉन हूं, आपका AI करियर कोच।',
+    systemPromptAddition: 'केवल हिंदी में जवाब दें। आप भर्ती और करियर परामर्श के विशेषज्ञ हैं।'
+  },
+  german: {
+    code: 'de',
+    name: 'Deutsch',
+    voiceCode: 'de-DE',
+    speechRecognitionCode: 'de-DE',
+    greeting: 'Hallo! Ich bin Everon, dein KI-Karrierecoach.',
+    systemPromptAddition: 'Antworte nur auf Deutsch. Du bist Experte für Recruiting und Karriereberatung.'
+  },
+  japanese: {
+    code: 'ja',
+    name: '日本語',
+    voiceCode: 'ja-JP',
+    speechRecognitionCode: 'ja-JP',
+    greeting: 'こんにちは！私はEveron、あなたのAIキャリアコーチです。',
+    systemPromptAddition: '日本語のみで回答してください。あなたは採用とキャリアカウンセリングの専門家です。'
+  },
+  korean: {
+    code: 'ko',
+    name: '한국어',
+    voiceCode: 'ko-KR',
+    speechRecognitionCode: 'ko-KR',
+    greeting: '안녕하세요! 저는 Everon, 당신의 AI 커리어 코치입니다.',
+    systemPromptAddition: '한국어로만 답변하세요. 당신은 채용 및 경력 상담 전문가입니다.'
   }
 };
 
@@ -100,8 +124,11 @@ const LANGUAGE_PATTERNS = {
   swahili: /\b(hujambo|mambo|karibu|asante|sawa|pole|samahani|kazi|ajira|natafuta|ninahitaji|nina|niko|katika|kwa|na|ya|wa|la|za|cha|vya|pa|ku|mu|mimi|wewe|yeye|sisi|nyinyi|wao|nzuri|mbaya|ndio|hapana|nini|namna|lini|wapi|nani|kwa nini|pia|lakini|kama|kufanya|kwenda|kuja|kuwa|kuwepo|kuwa na|kuweza|kutaka|kulazimika|kusema|kuona|kujua)\b/i,
   chinese: /[\u4e00-\u9fff]|你好|您好|工作|职业|职位|招聘|求职|找工作|公司|薪水|经验|技能|简历|面试|我|你|他|她|我们|你们|他们|是|有|在|的|了|和|或者|但是|如果|因为|所以|什么|怎么|什么时候|哪里|为什么|也|很|非常|好|不好|是的|不是|谢谢|请|对不起/,
   swedish: /\b(hej|hallå|tack|ursäkta|förlåt|arbete|jobb|tjänst|karriär|svenska|söker|behöver|vill|har|är|i|på|av|för|med|utan|mycket|mer|mindre|bra|dåligt|ja|nej|vad|hur|när|var|vem|varför|också|men|om|göra|gå|komma|vara|ha|kan|ska|skulle|säga|se|veta|jag|du|han|hon|vi|ni|de)\b/i,
-  twi: /\b(maakye|maaha|mema wo akye|medaase|wo ho te sɛn|yɛ|me|wo|ɔno|yɛn|mo|wɔn|adwuma|merehwehwɛ|mehia|mepɛ|me wɔ|me yɛ|wɔ|na|ne|a|ɛ|no|saa|dabi|ɛdeɛn|ɛyɛ dɛn|berɛ bɛn|ɛhe|hwan|ɛno nti|nso|sɛ|yɛ|kɔ|ba|tena|wɔ|tumi|pɛ|ka|hwɛ|nim)\b/i,
-  fante: /\b(mema wo akye|maakye|medaase|wo ho te dɛn|yɛ|me|wo|ɔno|yɛn|mo|wɔn|edwuma|merehwehwɛ|mehia|mepɛ|me wɔ|meyɛ|wɔ|na|ne|a|ɛ|no|aane|daabi|dɛn|ɛyɛ dɛn|daa|he|hwan|nso|sɛ|yɛ|kɔ|ba|tena|wɔ|tumi|pɛ|ka|hwɛ|nim)\b/i,
+  portuguese: /\b(olá|oi|bom|dia|tarde|noite|obrigado|obrigada|por favor|desculpe|perdão|trabalho|emprego|vaga|carreira|português|procuro|preciso|quero|tenho|sou|estou|em|no|na|nos|nas|um|uma|uns|umas|o|a|os|as|de|do|da|dos|das|por|para|com|sem|muito|mais|menos|bom|ruim|sim|não|que|como|quando|onde|quem|porque|também|mas|se|fazer|ir|vir|ser|estar|ter|haver|poder|querer|dever|dizer|ver|saber|eu|você|ele|ela|nós|vocês|eles|elas)\b/i,
+  hindi: /[\u0900-\u097F]|नमस्ते|नमस्कार|धन्यवाद|कृपया|माफ़|काम|नौकरी|रोजगार|पद|करियर|खोज|चाहिए|चाहता|चाहती|है|हूं|हैं|में|पर|से|को|का|की|के|और|या|लेकिन|अगर|के लिए|के साथ|बिना|बहुत|ज्यादा|कम|अच्छा|बुरा|हां|नहीं|क्या|कैसे|कब|कहां|कौन|क्यों|भी|करना|जाना|आना|होना|रखना|सकना|चाहना|कहना|देखना|जानना|मैं|तुम|आप|वह|हम|वे/,
+  german: /\b(hallo|guten|morgen|tag|abend|nacht|danke|bitte|entschuldigung|verzeihung|arbeit|job|stelle|karriär|deutsch|suche|brauche|möchte|will|habe|bin|ist|sind|in|auf|an|von|für|mit|ohne|sehr|mehr|weniger|gut|schlecht|ja|nein|was|wie|wann|wo|wer|warum|auch|aber|wenn|machen|gehen|kommen|sein|haben|können|werden|sollen|wollen|müssen|sagen|sehen|wissen|ich|du|sie|er|es|wir|ihr)\b/i,
+  japanese: /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]|こんにちは|ありがとう|すみません|仕事|職|求人|就職|転職|会社|給料|経験|スキル|履歴書|面接|私|あなた|彼|彼女|私たち|あなたたち|彼ら|です|ます|ある|いる|する|なる|行く|来る|見る|言う|聞く|思う|知る|できる|したい|欲しい|いい|悪い|はい|いいえ|何|どう|いつ|どこ|誰|なぜ|も|でも|から|まで|と|や|か|が|を|に|で|へ|より/,
+  korean: /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]|안녕하세요|감사합니다|죄송합니다|일|직장|취업|구직|이력서|면접|회사|경력|기술|연봉|저|당신|그|그녀|우리|그들|입니다|있습니다|없습니다|하다|되다|가다|오다|보다|말하다|듣다|생각하다|알다|할|원하다|좋다|나쁘다|네|아니요|무엇|어떻게|언제|어디|누구|왜|도|그러나|하지만|만약|때문에|그래서|와|과|이|가|을|를|에|에서|으로|보다|매우|더|덜/,
   english: /\b(hello|hi|hey|good|morning|afternoon|evening|night|thanks|thank you|please|excuse me|sorry|job|work|career|position|looking|searching|need|want|have|am|is|are|in|on|at|the|a|an|and|or|but|if|to|for|with|without|very|more|less|good|bad|yes|no|what|how|when|where|who|why|also|make|go|come|be|have|can|will|should|say|see|know)\b/i
 };
 
@@ -118,8 +145,11 @@ export function detectLanguage(text: string): string {
     swahili: (lowerText.match(LANGUAGE_PATTERNS.swahili) || []).length,
     chinese: (lowerText.match(LANGUAGE_PATTERNS.chinese) || []).length,
     swedish: (lowerText.match(LANGUAGE_PATTERNS.swedish) || []).length,
-    twi: (lowerText.match(LANGUAGE_PATTERNS.twi) || []).length,
-    fante: (lowerText.match(LANGUAGE_PATTERNS.fante) || []).length,
+    portuguese: (lowerText.match(LANGUAGE_PATTERNS.portuguese) || []).length,
+    hindi: (lowerText.match(LANGUAGE_PATTERNS.hindi) || []).length,
+    german: (lowerText.match(LANGUAGE_PATTERNS.german) || []).length,
+    japanese: (lowerText.match(LANGUAGE_PATTERNS.japanese) || []).length,
+    korean: (lowerText.match(LANGUAGE_PATTERNS.korean) || []).length,
     english: (lowerText.match(LANGUAGE_PATTERNS.english) || []).length
   };
   
@@ -143,10 +173,12 @@ export function detectLanguage(text: string): string {
   return 'english';
 }
 
-export function getSystemPrompt(language: string, isVoiceMode = false): string {
+export function getSystemPrompt(language: string, isVoiceMode = false, userName?: string): string {
   const config = SUPPORTED_LANGUAGES[language] || SUPPORTED_LANGUAGES.english;
+  const userContext = userName ? `You're speaking with ${userName}. ` : '';
+  
   const basePrompt = isVoiceMode 
-    ? `You are Everon, an active job recruiter and talent acquisition specialist! You're energetic, confident, and always thinking about job opportunities for candidates.
+    ? `You are Everon, an active job recruiter and talent acquisition specialist! ${userContext}You're energetic, confident, and always thinking about job opportunities for candidates.
 
 RECRUITER PERSONALITY: 
 - Act like an experienced recruiter who knows the job market inside out
@@ -154,6 +186,7 @@ RECRUITER PERSONALITY:
 - Ask about skills, experience, location preferences, and salary expectations
 - Show enthusiasm about matching candidates with perfect opportunities
 - Use recruiting language appropriate for the user's language
+${userName ? `- Address ${userName} by name occasionally to build rapport` : ''}
 
 CONVERSATION APPROACH:
 - Quickly assess their background and start suggesting relevant positions
@@ -162,7 +195,8 @@ CONVERSATION APPROACH:
 - Keep responses under 35 words, action-oriented, and recruiter-focused
 
 Think like a top recruiter who wants to place every candidate in their dream job!`
-    : `You are Everon, a job-focused career coach. Keep responses under 40 words. 
+    : `You are Everon, a job-focused career coach. ${userContext}Keep responses under 40 words. 
+${userName ? `Address ${userName} by name when appropriate to create a personal connection. ` : ''}
 
 ANALYZE conversation for: job role, location, salary, experience. Only ask for missing information. If you have enough details, provide specific job advice or recommendations. Never repeat questions about information already provided.`;
 

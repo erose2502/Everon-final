@@ -5,10 +5,11 @@ export async function askOpenAIVoiceAgent(
   prompt: string,
   conversationHistory?: Array<{role: string, content: string}>,
   onStream?: (partial: string) => void,
-  language: string = 'english'
+  language: string = 'english',
+  userName?: string
 ): Promise<string> {
   const messages = [
-    { role: "system", content: getSystemPrompt(language, true) },
+    { role: "system", content: getSystemPrompt(language, true, userName) },
     ...(conversationHistory?.slice(-6) || []), // Include last 6 messages for context
     { role: "user", content: prompt }
   ];
@@ -22,7 +23,7 @@ export async function askOpenAIVoiceAgent(
     body: JSON.stringify({
       model: "gpt-4o-mini", // Faster, cheaper model for voice
       messages,
-      max_tokens: 65, // Slightly longer for vibrant responses
+      max_tokens: 150, // Natural conversation length - allows complete sentences
       temperature: 0.8, // More creative and engaging
       stream: true,
     }),

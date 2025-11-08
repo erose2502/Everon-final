@@ -52,16 +52,34 @@ const LanguageSuggestion: React.FC<LanguageSuggestionProps> = ({ onClose }) => {
       description: 'Type in Swedish and I\'ll respond in Swedish'
     },
     {
-      flag: '🇬🇭',
-      language: 'Twi',
-      example: 'Maakye, merehwehwɛ adwuma',
-      description: 'Type in Twi and I\'ll understand and respond'
+      flag: '🇧🇷',
+      language: 'Português',
+      example: 'Olá, estou procurando emprego',
+      description: 'Type in Portuguese for Portuguese responses'
     },
     {
-      flag: '🇬🇭',
-      language: 'Fante',
-      example: 'Mema wo akye, merehwehwɛ edwuma',
-      description: 'Type in Fante and I\'ll respond in Fante'
+      flag: '🇮🇳',
+      language: 'हिन्दी',
+      example: 'नमस्ते, मैं नौकरी खोज रहा हूं',
+      description: 'Type in Hindi and I\'ll respond in Hindi'
+    },
+    {
+      flag: '🇩🇪',
+      language: 'Deutsch',
+      example: 'Hallo, ich suche einen Job',
+      description: 'Type in German for German responses'
+    },
+    {
+      flag: '🇯🇵',
+      language: '日本語',
+      example: 'こんにちは、仕事を探しています',
+      description: 'Type in Japanese and I\'ll respond in Japanese'
+    },
+    {
+      flag: '🇰🇷',
+      language: '한국어',
+      example: '안녕하세요, 일자리를 찾고 있습니다',
+      description: 'Type in Korean for Korean responses'
     }
   ];
 
