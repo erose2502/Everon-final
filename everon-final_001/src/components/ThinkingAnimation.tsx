@@ -10,7 +10,7 @@ const ThinkingAnimation: React.FC = () => {
           <span className="dot"></span>
           <span className="dot"></span>
         </div>
-        <div className="thinking-text">AI thinking...</div>
+        <div className="thinking-text">Everon is thinking...</div>
       </div>
     </div>
   );

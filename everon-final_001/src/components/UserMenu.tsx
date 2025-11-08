@@ -9,9 +9,10 @@ interface UserMenuProps {
   };
   onLogout: () => void;
   onLanguageSettings?: () => void;
+  onShowOnboarding?: () => void;
 }
 
-const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout, onLanguageSettings }) => {
+const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout, onLanguageSettings, onShowOnboarding }) => {
   const [showMenu, setShowMenu] = useState(false);
 
   const handleLogout = async () => {
@@ -23,6 +24,13 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout, onLanguageSettings 
   const handleLanguageSettings = () => {
     if (onLanguageSettings) {
       onLanguageSettings();
+      setShowMenu(false);
+    }
+  };
+
+  const handleShowOnboarding = () => {
+    if (onShowOnboarding) {
+      onShowOnboarding();
       setShowMenu(false);
     }
   };
@@ -60,6 +68,16 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout, onLanguageSettings 
                   <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
                 Language Settings
+              </button>
+            )}
+            
+            {onShowOnboarding && (
+              <button className="user-menu-item" onClick={handleShowOnboarding}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" />
+                </svg>
+                View Tutorial
               </button>
             )}
             

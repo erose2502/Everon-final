@@ -81,6 +81,11 @@ const SwipeableJobCards: React.FC<SwipeableJobCardsProps> = ({ jobs }) => {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Don't start drag if touching a button or link
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
     handleStart(e.touches[0].clientX);
   };
 
@@ -94,6 +99,11 @@ const SwipeableJobCards: React.FC<SwipeableJobCardsProps> = ({ jobs }) => {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Don't start drag if clicking on a button or link
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
     e.preventDefault();
     handleStart(e.clientX);
   };

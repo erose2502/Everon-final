@@ -187,7 +187,7 @@ class WebSearchService {
       ? ` in ${userProfile.location} or remote`
       : '';
     
-    const searchQuery = `current job openings ${query}${profileContext}${locationContext} ${new Date().getFullYear()} site:indeed.com OR site:linkedin.com OR site:glassdoor.com`;
+    const searchQuery = `current job openings ${query}${profileContext}${locationContext} ${new Date().getFullYear()} site:indeed.com OR site:linkedin.com OR site:glassdoor.com OR site:careers OR site:jobs`;
 
     console.log('🔍 Searching jobs with query:', searchQuery);
 
@@ -197,30 +197,67 @@ class WebSearchService {
         messages: [
           {
             role: "system",
-            content: "You are an expert job search assistant. Search comprehensively for real job listings and provide detailed information for each position. For EVERY job you find, you MUST include: 1) Complete job title, 2) Company name, 3) EXACT LOCATION (city, state, or 'Remote'), 4) Salary/compensation if available, 5) DETAILED job description (minimum 2-3 sentences explaining responsibilities, requirements, and what the role involves). Take your time to search thoroughly and provide comprehensive details for each position. Never leave descriptions empty or vague."
+            content: `You are an expert job search assistant that provides PERFECTLY FORMATTED job listings. Your responses must be structured EXACTLY as specified for clean UI display.
+
+CRITICAL FORMATTING RULES:
+1. Start each job with **Job Title:** followed by the EXACT position name ONLY
+2. Next line: **Company:** followed by the company name ONLY  
+3. Next line: **Location:** followed by city, state OR "Remote" ONLY
+4. Next line: **Salary:** followed by the salary range (e.g., "$80,000 - $120,000/year" or "$50 - $75/hour")
+   - ALWAYS try to include salary information from the job posting
+   - If exact salary not listed, provide typical range for that role based on market data
+   - Format: "$XX,XXX - $XX,XXX/year" or "$XX - $XX/hour" or "Competitive (est. $XX,XXX - $XX,XXX)"
+5. Next line: **Description:** followed by 2-4 complete sentences about the role
+
+SEARCH COMPREHENSIVE SOURCES:
+- Indeed.com job postings
+- LinkedIn job listings
+- Glassdoor opportunities
+- Company career pages (careers.company.com)
+- Local company websites with job openings
+- Well-reviewed employers in the area
+
+QUALITY STANDARDS:
+- Each job MUST have a specific job title (not vague descriptions)
+- Each job MUST have a real company name (not "Various" or "Multiple")
+- Each job MUST have a specific location (city, state) or "Remote"
+- Each job SHOULD include salary range (from posting or market estimate)
+- Descriptions MUST be detailed (50+ words minimum)
+- ONLY include REAL, ACTIVE job postings from the past 30 days
+- Take your time to find 5 high-quality, well-formatted listings`
           },
           {
             role: "user",
-            content: `Search extensively for current job openings: ${searchQuery}. 
+            content: `Search thoroughly for 5 current job openings: ${searchQuery}
 
-For EACH job posting you find, provide this complete information:
-- **Job Title:** [Full position title]
-- **Company:** [Company name]  
-- **Location:** [City, State OR Remote]
-- **Salary:** [If available, include range]
-- **Description:** [Detailed description of 2-3+ sentences covering: main responsibilities, required skills/experience, and key aspects of the role]
+Find jobs from:
+✓ Indeed.com and LinkedIn job boards
+✓ Company career websites (e.g., microsoft.com/careers, google.com/jobs)  
+✓ Glassdoor listings
+✓ Local businesses with strong reviews hiring in the area
+✓ Company-specific job portals
 
-Search thoroughly and take time to find quality listings with comprehensive details. Focus on real, active job postings from reputable sources.`
+For EACH of the 5 jobs, provide EXACTLY this format:
+
+**Job Title:** [Exact position title - be specific, not generic]
+**Company:** [Real company name]
+**Location:** [City, State OR Remote]
+**Salary:** [$XX,XXX - $XX,XXX/year OR $XX - $XX/hour OR Competitive (est. $XX,XXX - $XX,XXX)]
+**Description:** [2-4 detailed sentences covering: main responsibilities, key requirements, what makes this role unique, and what the company does. Minimum 50 words.]
+
+IMPORTANT: Always include salary information. If the job posting shows salary, use it. If not, provide a market-based estimate for that role and location.
+
+Take time to search comprehensively. Focus on quality over speed. Return 5 well-formatted, detailed job listings with salary ranges.`
           }
         ],
-        max_tokens: 3000, // Increased for more detailed job descriptions
-        temperature: 0.1, // Lower temperature for more accurate results
+        max_tokens: 4000, // Increased for comprehensive search
+        temperature: 0.2, // Low for accurate, factual results
         return_citations: true,
         search_recency_filter: "month", // Only recent postings
-        search_domain_filter: ["indeed.com", "linkedin.com", "glassdoor.com"] // Focus on quality job sites
+        search_domain_filter: ["indeed.com", "linkedin.com", "glassdoor.com", "careers", "jobs"] // Comprehensive sources
       };
 
-      console.log('📡 Sending request to Perplexity API:', JSON.stringify(requestBody, null, 2));
+      console.log('📡 Sending request to Perplexity API for comprehensive job search');
 
       const response = await fetch(this.chatUrl, {
         method: 'POST',
@@ -240,23 +277,57 @@ Search thoroughly and take time to find quality listings with comprehensive deta
       }
 
       const data: PerplexitySearchResponse = await response.json();
-      console.log('📡 Response data:', JSON.stringify(data, null, 2));
+      console.log('📡 Response data received');
       
       const content = data.choices[0]?.message?.content || '';
-      console.log('📡 Job search content received (first 300 chars):', content.substring(0, 300));
+      console.log('📡 Job search content received, length:', content.length);
       
       // Parse the content to extract job listings
       const jobs = this.parseJobResults(content, query, userProfile);
       
       // Add citation URLs if available
       if (data.citations && data.citations.length > 0) {
+        console.log('📎 Available citations:', data.citations);
+        
+        // Try to match jobs with citations intelligently
+        // Filter for job-related URLs (career pages, job boards)
+        const jobUrls = data.citations.filter(url => 
+          url.includes('indeed.com') || 
+          url.includes('linkedin.com') || 
+          url.includes('glassdoor.com') ||
+          url.includes('/careers') ||
+          url.includes('/jobs') ||
+          url.includes('/job/') ||
+          url.includes('/career/') ||
+          url.includes('apply')
+        );
+        
+        console.log('🔗 Filtered job URLs:', jobUrls);
+        
         jobs.forEach((job, index) => {
-          if (!job.url && data.citations && data.citations[index]) {
-            job.url = data.citations[index];
+          if (!job.url) {
+            // First try to use filtered job URLs
+            if (jobUrls[index]) {
+              job.url = jobUrls[index];
+              console.log(`✅ Assigned URL to ${job.title}: ${job.url}`);
+            } 
+            // Fallback to any citation
+            else if (data.citations && data.citations[index]) {
+              job.url = data.citations[index];
+              console.log(`⚠️ Assigned fallback URL to ${job.title}: ${job.url}`);
+            } else {
+              console.log(`❌ No URL available for ${job.title}`);
+            }
           }
         });
+      } else {
+        console.log('⚠️ No citations received from Perplexity API');
       }
       
+      console.log(`✅ Successfully found ${jobs.length} job listings`);
+      jobs.forEach((job, idx) => {
+        console.log(`  ${idx + 1}. ${job.title} at ${job.company} - URL: ${job.url || 'NO URL'}`);
+      });
       return jobs;
     } catch (error) {
       console.error('Job search error:', error);
@@ -343,109 +414,118 @@ Search thoroughly and take time to find quality listings with comprehensive deta
    * Parse job results from Perplexity response
    */
   private parseJobResults(content: string, originalQuery: string, userProfile?: UserProfile): JobSearchResult[] {
-    console.log('🔧 DEBUG: Parsing job results from content');
+    console.log('🔧 Parsing job results from structured content');
     
     const jobs: JobSearchResult[] = [];
     const lines = content.split('\n').filter(line => line.trim());
     
     let currentJob: Partial<JobSearchResult> = {};
+    let isCollectingDescription = false;
     
     for (const line of lines) {
       const trimmed = line.trim();
       
-      // Skip empty lines and very short lines
-      if (trimmed.length < 10) continue;
+      // Skip empty lines
+      if (trimmed.length < 3) continue;
       
-      // Look for job title patterns (numbered lists, bullets, or bold text indicators)
-      const titleMatch = trimmed.match(/^(?:\d+\.|[-•*]|\*\*)\s*(.+?)(?:\*\*)?(?:\s+at\s+|\s+-\s+)?(.+)?$/i);
-      
-      if (titleMatch) {
-        // Save previous job if exists
-        if (currentJob.title) {
+      // Detect **Job Title:** - this starts a new job
+      if (trimmed.match(/^\*\*Job Title:\*\*/i) || trimmed.match(/^Job Title:/i)) {
+        // Save previous job if it has complete data
+        if (currentJob.title && currentJob.company && currentJob.description && currentJob.description.length > 50) {
           jobs.push(this.finalizeJob(currentJob, originalQuery, userProfile));
         }
         
         // Start new job
-        const titlePart = titleMatch[1]?.trim() || '';
-        const companyPart = titleMatch[2]?.trim();
+        const title = trimmed
+          .replace(/^\*\*Job Title:\*\*\s*/i, '')
+          .replace(/^Job Title:\s*/i, '')
+          .trim();
         
-        // Check if "at Company" pattern exists
-        const atMatch = titlePart.match(/^(.+?)\s+at\s+(.+)$/i);
-        if (atMatch) {
-          currentJob = {
-            title: atMatch[1].trim(),
-            company: atMatch[2].trim(),
-            location: 'Location not specified',
-            description: '',
-            requirements: [],
-            match_score: 75
-          };
+        currentJob = {
+          title: title,
+          company: '',
+          location: '',
+          description: '',
+          requirements: [],
+          match_score: 75
+        };
+        isCollectingDescription = false;
+        console.log('📝 Found job title:', title);
+      }
+      // Detect **Company:**
+      else if (trimmed.match(/^\*\*Company:\*\*/i) || trimmed.match(/^Company:/i)) {
+        const company = trimmed
+          .replace(/^\*\*Company:\*\*\s*/i, '')
+          .replace(/^Company:\s*/i, '')
+          .trim();
+        currentJob.company = company;
+        console.log('🏢 Found company:', company);
+      }
+      // Detect **Location:**
+      else if (trimmed.match(/^\*\*Location:\*\*/i) || trimmed.match(/^Location:/i)) {
+        const location = trimmed
+          .replace(/^\*\*Location:\*\*\s*/i, '')
+          .replace(/^Location:\s*/i, '')
+          .trim();
+        currentJob.location = location;
+        console.log('📍 Found location:', location);
+      }
+      // Detect **Salary:**
+      else if (trimmed.match(/^\*\*Salary:\*\*/i) || trimmed.match(/^Salary:/i)) {
+        const salary = trimmed
+          .replace(/^\*\*Salary:\*\*\s*/i, '')
+          .replace(/^Salary:\s*/i, '')
+          .trim();
+        if (salary && !salary.match(/not available|not specified|n\/a/i)) {
+          currentJob.salary = salary;
+          console.log('💰 Found salary:', salary);
+        }
+      }
+      // Detect **Description:** - start collecting description
+      else if (trimmed.match(/^\*\*Description:\*\*/i) || trimmed.match(/^Description:/i)) {
+        const descStart = trimmed
+          .replace(/^\*\*Description:\*\*\s*/i, '')
+          .replace(/^Description:\s*/i, '')
+          .trim();
+        currentJob.description = descStart;
+        isCollectingDescription = true;
+        console.log('📄 Starting description collection');
+      }
+      // Continue collecting description if we're in description mode
+      else if (isCollectingDescription && currentJob.title) {
+        // Stop collecting if we hit another field marker or new job
+        if (trimmed.match(/^\*\*[A-Z]/)) {
+          isCollectingDescription = false;
         } else {
-          currentJob = {
-            title: titlePart,
-            company: companyPart || 'Company not specified',
-            location: 'Location not specified',
-            description: '',
-            requirements: [],
-            match_score: 75
-          };
-        }
-      }
-      // Look for location indicators - improved patterns
-      else if (currentJob.title) {
-        // Check for explicit location patterns
-        const locationPatterns = [
-          /(?:location|located|based|office):\s*(.+)/i,
-          /(.+?),\s*[A-Z]{2}(?:\s+\d{5})?/i, // City, State format
-          /(remote|work from home|wfh)/i,
-          /in\s+([^,\n]+(?:,\s*[A-Z]{2})?)/i, // "in City, State" format
-          /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),\s*([A-Z]{2})/i // Direct City, State
-        ];
-        
-        for (const pattern of locationPatterns) {
-          const locationMatch = trimmed.match(pattern);
-          if (locationMatch) {
-            let location = locationMatch[1]?.trim() || locationMatch[0]?.trim();
-            if (location && location.toLowerCase().includes('remote')) {
-              location = 'Remote';
-            }
-            if (location && location !== currentJob.location) {
-              currentJob.location = location;
-              break;
-            }
-          }
-        }
-      }
-      // Look for salary
-      else if (trimmed.match(/\$[\d,]+/i) && currentJob.title) {
-        const salaryMatch = trimmed.match(/\$[\d,]+(?:\s*[-–]\s*\$[\d,]+)?(?:\s*(?:per\s*year|\/year|annually|\/yr))?/i);
-        if (salaryMatch) {
-          currentJob.salary = salaryMatch[0];
-        }
-      }
-      // Add to description - capture more detailed content
-      else if (currentJob.title && trimmed.length > 15) {
-        // Skip lines that are just metadata
-        if (!trimmed.match(/^(posted|updated|id:|ref:|source:)/i)) {
+          // Add to description
           const separator = currentJob.description ? ' ' : '';
           currentJob.description = (currentJob.description || '') + separator + trimmed;
         }
       }
+      // Fallback: if we have a title but no explicit fields, try to extract info
+      else if (currentJob.title && !currentJob.company && trimmed.length > 10) {
+        // Look for company mentions
+        const companyPattern = trimmed.match(/(?:at|for|with)\s+([A-Z][A-Za-z0-9\s&.,-]+?)(?:\s+in|\s+located|,|$)/);
+        if (companyPattern && !currentJob.company) {
+          currentJob.company = companyPattern[1].trim();
+        }
+      }
     }
     
-    // Add the last job
-    if (currentJob.title) {
+    // Save the last job if complete
+    if (currentJob.title && currentJob.company && currentJob.description && currentJob.description.length > 50) {
       jobs.push(this.finalizeJob(currentJob, originalQuery, userProfile));
     }
     
-    // If no jobs were parsed, create fallback jobs
+    console.log(`✅ Successfully parsed ${jobs.length} complete jobs from structured format`);
+    
+    // If no jobs were parsed with the structured format, create fallback
     if (jobs.length === 0) {
-      console.log('🔧 DEBUG: No jobs parsed, creating fallback results');
+      console.log('⚠️ No structured jobs found, creating fallback');
       return this.createFallbackJobs(originalQuery, content, userProfile);
     }
     
-    console.log(`🔧 DEBUG: Successfully parsed ${jobs.length} jobs`);
-    return jobs.slice(0, 10);
+    return jobs.slice(0, 5); // Limit to 5 jobs
   }
   
   /**
@@ -459,16 +539,14 @@ Search thoroughly and take time to find quality listings with comprehensive deta
       .replace(/^[-•*]\s*/, '') // Remove bullet points
       .trim();
 
-    // Use better location fallback based on user profile and query
-    if (!cleanLocation || cleanLocation === 'Location not specified') {
-      if (userProfile?.preferences?.remote) {
+    // Use better location fallback - prioritize Remote over generic text
+    if (!cleanLocation || cleanLocation === 'Location not specified' || cleanLocation === 'Not specified') {
+      if (userProfile?.preferences?.remote || query.toLowerCase().includes('remote')) {
         cleanLocation = 'Remote';
       } else if (userProfile?.location) {
-        cleanLocation = `${userProfile.location} area`;
-      } else if (query.toLowerCase().includes('remote')) {
-        cleanLocation = 'Remote';
+        cleanLocation = userProfile.location;
       } else {
-        cleanLocation = 'Location varies';
+        cleanLocation = 'Remote'; // Default to Remote instead of "Location varies"
       }
     }
 
@@ -480,24 +558,36 @@ Search thoroughly and take time to find quality listings with comprehensive deta
       .replace(/^[-•*]\s*/, '') // Remove bullet points
       .trim();
 
-    // Ensure description is never empty
+    // Clean up title - remove any formatting
+    const cleanTitle = (job.title || '')
+      .replace(/^\*\*[^*]*\*\*\s*/, '')
+      .replace(/^Job Title:\s*/i, '')
+      .replace(/^[-•*]\s*/, '')
+      .trim();
+
+    // Clean up company
+    const cleanCompany = (job.company || '')
+      .replace(/^\*\*[^*]*\*\*\s*/, '')
+      .replace(/^Company:\s*/i, '')
+      .replace(/^[-•*]\s*/, '')
+      .trim();
+
+    // Only use fallback description if we have NO description at all
     let finalDescription = cleanDescription.substring(0, 800) || '';
-    if (!finalDescription || finalDescription.length < 50) {
-      const jobRole = job.title || 'this position';
-      const companyName = job.company || 'the company';
-      finalDescription = `This ${jobRole.toLowerCase()} role at ${companyName} offers an exciting opportunity to contribute to the team's success. The position involves key responsibilities in the field and requires relevant skills and experience. Interested candidates should contact the company directly for detailed job requirements and application procedures.`;
+    if (!finalDescription) {
+      finalDescription = `Position available. Please check the job posting for detailed requirements and responsibilities.`;
     }
 
     return {
-      title: job.title || 'Job Title Not Found',
-      company: job.company || 'Company Not Specified',
+      title: cleanTitle || 'Position Available',
+      company: cleanCompany || 'See Job Posting',
       location: cleanLocation,
       salary: job.salary,
       description: finalDescription,
       requirements: job.requirements || [],
       url: job.url,
       posted_date: job.posted_date || new Date().toISOString(),
-      match_score: this.calculateMatchScore(job.title || '', cleanDescription || '', query)
+      match_score: this.calculateMatchScore(cleanTitle || '', finalDescription || '', query)
     };
   }
   
@@ -505,31 +595,35 @@ Search thoroughly and take time to find quality listings with comprehensive deta
    * Create fallback jobs when parsing fails
    */
   private createFallbackJobs(query: string, content: string, userProfile?: UserProfile): JobSearchResult[] {
-    // Try to extract any job-like information from the content
-    const hasJobInfo = content.match(/job|position|role|hiring|opening/i);
+    console.log('⚠️ Creating fallback jobs - structured parsing failed');
     
-    if (!hasJobInfo) {
-      return [{
-        title: `${query} positions available`,
-        company: 'Various Companies',
-        location: userProfile?.location ? `${userProfile.location} area` : 'Multiple Locations',
-        description: 'Based on current market data, multiple positions are available. Please check job boards like Indeed, LinkedIn, and Glassdoor for specific listings.',
+    // Extract any useful information from the content
+    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 30);
+    const hasJobKeywords = content.match(/\b(developer|engineer|manager|analyst|specialist|coordinator|designer|consultant)\b/gi);
+    
+    if (hasJobKeywords && hasJobKeywords.length > 0) {
+      // Try to create jobs based on mentioned roles
+      const roles = [...new Set(hasJobKeywords.map(r => r.toLowerCase()))].slice(0, 5);
+      
+      return roles.map((role, index) => ({
+        title: `${role.charAt(0).toUpperCase() + role.slice(1)} Position`,
+        company: 'Multiple Employers',
+        location: userProfile?.location || 'Remote',
+        description: sentences[index] || `Seeking qualified ${role}s. Visit job boards like Indeed, LinkedIn, and company career pages for specific listings and application details.`,
         requirements: [],
-        match_score: 60,
+        match_score: 60 + (index * 2),
         posted_date: new Date().toISOString()
-      }];
+      }));
     }
     
-    // Extract some information from content
-    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 30);
-    
+    // Ultimate fallback - single generic result
     return [{
       title: `${query} Opportunities`,
-      company: 'Multiple Employers',
-      location: userProfile?.location ? `${userProfile.location} area` : 'Various Locations',
-      description: sentences.slice(0, 3).join('. ') || 'Job opportunities available in this field.',
+      company: 'Various Companies',
+      location: userProfile?.location || 'Multiple Locations',
+      description: 'Multiple job opportunities are available. Please search on Indeed.com, LinkedIn.com, and company career websites for current openings. Use specific job titles and locations for best results.',
       requirements: [],
-      match_score: 65,
+      match_score: 50,
       posted_date: new Date().toISOString()
     }];
   }

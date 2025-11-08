@@ -119,6 +119,7 @@ import AuthModal from './components/AuthModal';
 import UserMenu from './components/UserMenu';
 import ChatHistorySidebar from './components/ChatHistorySidebar';
 import LanguageSettings from './components/LanguageSettings';
+import Onboarding from './components/Onboarding';
 import { autoDetectAndUpdateLanguage } from './utils/languageUtils';
 
 declare global {
@@ -187,6 +188,7 @@ function App() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [isTTSPaused, setIsTTSPaused] = useState(false);
   const [listeningTimeout, setListeningTimeout] = useState<number | null>(null);
   const [ttsLock, setTTSLock] = useState(false); // Prevent TTS interruption
@@ -194,8 +196,10 @@ function App() {
   const [handoffStep, setHandoffStep] = useState(0);
   const [handoffInterval, setHandoffInterval] = useState<number | null>(null);
   const [activeTools, setActiveTools] = useState<string[]>([]);
-  const [jobSearchMode, setJobSearchMode] = useState(false);
+  const [jobSearchMode, setJobSearchMode] = useState(true); // Always on for logged-in users
   const [jobSearchPrompt, setJobSearchPrompt] = useState('');
+  const [jobSearchIntent, setJobSearchIntent] = useState<'none' | 'curious' | 'actively_searching'>('none');
+  const [hasGatheredJobDetails, setHasGatheredJobDetails] = useState(false);
   
   // Voice conversation tracking to prevent repetitive questions
   const [askedTopics, setAskedTopics] = useState<Set<string>>(new Set());
@@ -604,6 +608,17 @@ INSTRUCTIONS:
   // Example resume text (replace with actual resume parsing later)
 
   // (Removed unused handleJobSearch function)
+
+  // Check if user has completed onboarding
+  useEffect(() => {
+    const hasCompletedOnboarding = localStorage.getItem('everon_onboarding_completed');
+    if (!hasCompletedOnboarding && !showStartupAnimation) {
+      // Show onboarding after startup animation completes
+      setTimeout(() => {
+        setShowOnboarding(true);
+      }, 500);
+    }
+  }, [showStartupAnimation]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1122,33 +1137,52 @@ INSTRUCTIONS:
 
   // Enhanced message processing with webSearchService integration
   const processMessage = async (messageToSend: string, detectedLanguage?: string): Promise<string> => {
-    // Check if we're in job search mode or if this is a job search request
-    let isJobSearchRequest = jobSearchMode;
+    const lowerMessage = messageToSend.toLowerCase();
     
-    if (!jobSearchMode) {
-      // Auto-detect job search queries with SPECIFIC action keywords only
-      const jobSearchKeywords = [
-        'find jobs', 
-        'search jobs', 
-        'job search', 
-        'find work', 
-        'job opportunities', 
-        'career opportunities', 
-        'job openings',
-        'look for jobs',
-        'help me find',
-        'search for positions'
-      ];
-      isJobSearchRequest = jobSearchKeywords.some(keyword => 
-        messageToSend.toLowerCase().includes(keyword)
-      );
+    // Detect job search intent
+    const activeSearchKeywords = [
+      'find me', 'find jobs', 'search for jobs', 'looking for a job', 
+      'i need a job', 'help me find', 'get me a job', 'i want to apply'
+    ];
+    
+    const curiousKeywords = [
+      'what jobs', 'tell me about', 'how much do', 'what\'s the salary',
+      'job market', 'available positions', 'opportunities in'
+    ];
+    
+    const hasActiveIntent = activeSearchKeywords.some(keyword => lowerMessage.includes(keyword));
+    const hasCuriousIntent = curiousKeywords.some(keyword => lowerMessage.includes(keyword));
+    
+    // Update intent state
+    if (hasActiveIntent) {
+      setJobSearchIntent('actively_searching');
+      
+      // Check if message has enough details for job search
+      const hasRole = /\b(engineer|developer|manager|designer|analyst|scientist|consultant|accountant|nurse|teacher)\b/i.test(lowerMessage);
+      const hasLocation = /\b(in|at|near|remote|hybrid)\s+[A-Z][a-z]+/i.test(messageToSend) || /remote|hybrid|onsite/i.test(lowerMessage);
+      
+      if (hasRole && hasLocation) {
+        // Enough details to search
+        setHasGatheredJobDetails(true);
+      } else {
+        // Not enough details - let AI ask clarifying questions via system prompt
+        setHasGatheredJobDetails(false);
+      }
+    } else if (hasCuriousIntent) {
+      setJobSearchIntent('curious');
     }
-
+    
+    // Check if we should trigger an actual job search
+    // Only trigger if: actively searching + has gathered details OR explicit search confirmed
+    const shouldTriggerSearch = (hasActiveIntent && hasGatheredJobDetails) || 
+      (lowerMessage.includes('yes') && jobSearchIntent === 'actively_searching');
+    
     console.log('🔍 Message:', messageToSend);
-    console.log('🔍 Job search mode active?', jobSearchMode);
-    console.log('🔍 Is job search request?', isJobSearchRequest);
+    console.log('🔍 Job search intent:', jobSearchIntent);
+    console.log('🔍 Has gathered details?', hasGatheredJobDetails);
+    console.log('🔍 Should trigger search?', shouldTriggerSearch);
 
-    if (isJobSearchRequest) {
+    if (shouldTriggerSearch) {
       // Combine job search prompt with user message if in mode
       const searchQuery = jobSearchMode ? `${jobSearchPrompt}${messageToSend}` : messageToSend;
       
@@ -1263,6 +1297,14 @@ Use this information to provide personalized career advice and job recommendatio
 
   return (
     <div className="app-container">
+      {/* Onboarding Flow for New Users */}
+      {showOnboarding && (
+        <Onboarding 
+          onComplete={() => setShowOnboarding(false)}
+          userName={userProfile?.displayName || user?.displayName || undefined}
+        />
+      )}
+
       {/* Startup Animation */}
       {showStartupAnimation && (
         <StartupAnimation 
@@ -1326,6 +1368,7 @@ Use this information to provide personalized career advice and job recommendatio
                 user={user} 
                 onLogout={handleLogout}
                 onLanguageSettings={() => setShowLanguageSettings(true)}
+                onShowOnboarding={() => setShowOnboarding(true)}
               />
             ) : (
               <button 
