@@ -196,7 +196,7 @@ function App() {
   const [handoffStep, setHandoffStep] = useState(0);
   const [handoffInterval, setHandoffInterval] = useState<number | null>(null);
   const [activeTools, setActiveTools] = useState<string[]>([]);
-  const [jobSearchMode, setJobSearchMode] = useState(true); // Always on for logged-in users
+  const [jobSearchMode, setJobSearchMode] = useState(false); // Off by default, enabled for logged-in users
   const [jobSearchPrompt, setJobSearchPrompt] = useState('');
   const [jobSearchIntent, setJobSearchIntent] = useState<'none' | 'curious' | 'actively_searching'>('none');
   const [hasGatheredJobDetails, setHasGatheredJobDetails] = useState(false);
@@ -319,15 +319,18 @@ function App() {
   // LiveKit Voice Agent Hook - with speech recognition callback
   const livekit = useLiveKitVoice(livekitConfig, async (transcript: string) => {
     
-    // Only auto-detect language if user's preference is 'auto', otherwise use their preferred language
-    const detectedLanguage = userProfile?.preferences?.language && userProfile.preferences.language !== 'auto'
-      ? userProfile.preferences.language // Force user's preferred language
-      : autoDetectAndUpdateLanguage(
-          transcript, 
-          language, 
-          (lang: string) => setLanguage(lang as any), 
-          setDetectedLang
-        );
+    // Only auto-detect language if user is logged in AND preference is 'auto'
+    // For non-logged-in users, always use English (no auto-switching)
+    const detectedLanguage = !user 
+      ? 'english' // Non-logged-in users always use English
+      : userProfile?.preferences?.language && userProfile.preferences.language !== 'auto'
+        ? userProfile.preferences.language // Force user's preferred language
+        : autoDetectAndUpdateLanguage(
+            transcript, 
+            language, 
+            (lang: string) => setLanguage(lang as any), 
+            setDetectedLang
+          );
     
     // Update TTS language
     ttsService.setLanguage(detectedLanguage);
@@ -680,6 +683,15 @@ INSTRUCTIONS:
     }
   }, [user]);
 
+  // Enable job search mode for logged-in users, disable for non-logged-in users
+  useEffect(() => {
+    if (user) {
+      setJobSearchMode(true); // Enable for logged-in users
+    } else {
+      setJobSearchMode(false); // Disable for non-logged-in users
+    }
+  }, [user]);
+
   // Handle clicks outside dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -701,13 +713,16 @@ INSTRUCTIONS:
 
     console.log('sendMessage called. voiceMode:', voiceMode, 'messageToSend:', messageToSend);
 
-    // Auto-detect language from user input for regular chat (same as speech agent)
-    const detectedLanguage = autoDetectAndUpdateLanguage(
-      messageToSend,
-      language,
-      (lang: string) => setLanguage(lang as any),
-      setDetectedLang
-    );
+    // Auto-detect language from user input for regular chat
+    // For non-logged-in users, always use English (no auto-switching)
+    const detectedLanguage = !user 
+      ? 'english' // Non-logged-in users always use English
+      : autoDetectAndUpdateLanguage(
+          messageToSend,
+          language,
+          (lang: string) => setLanguage(lang as any),
+          setDetectedLang
+        );
     
     console.log('🌍 Detected language for this message:', detectedLanguage);
 
