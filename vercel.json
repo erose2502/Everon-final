@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd everon-final_001 && npm install && npm run build",
+  "buildCommand": "npm install --prefix everon-final_001 && npm run build --prefix everon-final_001",
   "outputDirectory": "everon-final_001/dist",
-  "installCommand": "cd everon-final_001 && npm install",
+  "installCommand": "npm install --prefix everon-final_001",
   "rewrites": [
     {
       "source": "/(.*)",
