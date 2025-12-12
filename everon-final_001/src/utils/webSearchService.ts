@@ -315,13 +315,25 @@ Take time to search comprehensively. Focus on quality over speed. Return 5 well-
             else if (data.citations && data.citations[index]) {
               job.url = data.citations[index];
               console.log(`⚠️ Assigned fallback URL to ${job.title}: ${job.url}`);
-            } else {
-              console.log(`❌ No URL available for ${job.title}`);
+            } 
+            // If still no URL, create a Google search link as last resort
+            else {
+              const searchQuery = encodeURIComponent(`${job.title} ${job.company} ${job.location || ''} job apply`);
+              job.url = `https://www.google.com/search?q=${searchQuery}`;
+              console.log(`🔍 Generated Google search URL for ${job.title}: ${job.url}`);
             }
           }
         });
       } else {
         console.log('⚠️ No citations received from Perplexity API');
+        // Generate Google search URLs for all jobs if no citations
+        jobs.forEach((job) => {
+          if (!job.url) {
+            const searchQuery = encodeURIComponent(`${job.title} ${job.company} ${job.location || ''} job apply`);
+            job.url = `https://www.google.com/search?q=${searchQuery}`;
+            console.log(`🔍 Generated Google search URL for ${job.title}: ${job.url}`);
+          }
+        });
       }
       
       console.log(`✅ Successfully found ${jobs.length} job listings`);

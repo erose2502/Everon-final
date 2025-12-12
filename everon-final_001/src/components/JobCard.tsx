@@ -32,14 +32,6 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
     }
   };
 
-  const getMatchScoreColor = (score?: number) => {
-    if (!score) return '#6b7280';
-    if (score >= 90) return '#10b981'; // green
-    if (score >= 75) return '#f59e0b'; // yellow
-    if (score >= 60) return '#f97316'; // orange
-    return '#ef4444'; // red
-  };
-
   // Clean description - remove asterisks and format properly
   const cleanDescription = (desc?: string) => {
     if (!desc) return 'No description available';
@@ -73,14 +65,6 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
       <div className="job-header">
         <div className="job-header-top">
           <h3 className="job-title-modern">{cleanText(job.title, 'Position Available')}</h3>
-          {(job.match_score && job.match_score > 0) ? (
-            <div 
-              className="match-badge" 
-              style={{ backgroundColor: getMatchScoreColor(job.match_score) }}
-            >
-              {job.match_score}%
-            </div>
-          ) : null}
         </div>
         
         <div className="job-company-info">

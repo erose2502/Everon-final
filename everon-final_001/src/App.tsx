@@ -199,7 +199,6 @@ function App() {
   const [jobSearchMode, setJobSearchMode] = useState(false); // Off by default, enabled for logged-in users
   const [jobSearchPrompt, setJobSearchPrompt] = useState('');
   const [jobSearchIntent, setJobSearchIntent] = useState<'none' | 'curious' | 'actively_searching'>('none');
-  const [hasGatheredJobDetails, setHasGatheredJobDetails] = useState(false);
   
   // Voice conversation tracking to prevent repetitive questions
   const [askedTopics, setAskedTopics] = useState<Set<string>>(new Set());
@@ -771,12 +770,17 @@ INSTRUCTIONS:
       // Now process the message (AI starts thinking) - get the response
       const aiResponse = await processMessage(languageInstruction + '\n' + messageToSend, detectedLanguage);
       
-      // Add the assistant message immediately when AI response is ready
-      console.log('✅ AI response ready, adding to chat...');
-      setMessages((prev: Message[]) => [...prev, { 
-        role: 'assistant', 
-        content: aiResponse 
-      }]);
+      // Only add the assistant message if there's actual content
+      // Empty string means job search already handled the response
+      if (aiResponse && aiResponse.trim().length > 0) {
+        console.log('✅ AI response ready, adding to chat...');
+        setMessages((prev: Message[]) => [...prev, { 
+          role: 'assistant', 
+          content: aiResponse 
+        }]);
+      } else {
+        console.log('✅ AI response empty (job search handled) - skipping message add');
+      }
       
       // If in voice mode, automatically start listening again after response
       if (voiceModeRef.current) {
@@ -1168,33 +1172,49 @@ INSTRUCTIONS:
     const hasActiveIntent = activeSearchKeywords.some(keyword => lowerMessage.includes(keyword));
     const hasCuriousIntent = curiousKeywords.some(keyword => lowerMessage.includes(keyword));
     
-    // Update intent state
+    // Update intent state - but preserve existing intent if user is just responding
     if (hasActiveIntent) {
       setJobSearchIntent('actively_searching');
-      
-      // Check if message has enough details for job search
-      const hasRole = /\b(engineer|developer|manager|designer|analyst|scientist|consultant|accountant|nurse|teacher)\b/i.test(lowerMessage);
-      const hasLocation = /\b(in|at|near|remote|hybrid)\s+[A-Z][a-z]+/i.test(messageToSend) || /remote|hybrid|onsite/i.test(lowerMessage);
-      
-      if (hasRole && hasLocation) {
-        // Enough details to search
-        setHasGatheredJobDetails(true);
-      } else {
-        // Not enough details - let AI ask clarifying questions via system prompt
-        setHasGatheredJobDetails(false);
-      }
-    } else if (hasCuriousIntent) {
+    } else if (hasCuriousIntent && jobSearchIntent === 'none') {
+      // Only set curious if no intent exists yet
       setJobSearchIntent('curious');
     }
+    // Don't reset intent to 'none' - let it persist across the conversation
     
-    // Check if we should trigger an actual job search
-    // Only trigger if: actively searching + has gathered details OR explicit search confirmed
-    const shouldTriggerSearch = (hasActiveIntent && hasGatheredJobDetails) || 
-      (lowerMessage.includes('yes') && jobSearchIntent === 'actively_searching');
+    // Check conversation history (last 5 messages) for job search details
+    const recentConversation = messages.slice(-5).map(m => m.content).join(' ').toLowerCase();
+    const fullContext = (recentConversation + ' ' + lowerMessage).toLowerCase();
+    
+    // Enhanced pattern matching for job details across conversation
+    // Much more comprehensive role detection including multi-word titles and variations
+    const hasRole = /\b(full[\s-]?stack|software|engineer|developer|dev|manager|designer|analyst|scientist|consultant|accountant|nurse|teacher|programmer|architect|director|coordinator|specialist|administrator|technician|associate|front[\s-]?end|back[\s-]?end|web|mobile|data|machine learning|ml|ai|devops|qa|tester|product|project|scrum|agile|ux|ui|graphic|marketing|sales|customer|support|recruiter|hr|finance|accounting|legal|writer|content|seo|digital|social media|executive|ceo|cto|cfo|vp|vice president)\b/i.test(fullContext);
+    const hasLocation = /\b(in|at|near|remote|hybrid|onsite)\s*[A-Z]?[a-z]+/i.test(messageToSend + ' ' + recentConversation) || 
+                       /\b(remote|hybrid|onsite|anywhere|flexible)\b/i.test(fullContext);
+    const hasSalary = /\$?\d{2,3}k|\$\d{3,6}|salary|pay|compensation/i.test(fullContext);
+    const hasExperience = /\b(\d+[\+]?\s*years?|junior|senior|mid[\s-]?level|entry[\s-]?level|experienced)\b/i.test(fullContext);
+    
+    // Determine if we have enough information
+    const hasMinimumInfo = hasRole && hasLocation; // Role + Location is minimum
+    const hasGoodInfo = hasRole && hasLocation && (hasSalary || hasExperience); // Better with salary/experience
+    
+    // Automatic search triggers:
+    // 1. Active intent + minimum info gathered
+    // 2. User confirms with "yes", "sure", "go ahead", "do it", etc.
+    // 3. User provides additional details after initial intent AND we have minimum info
+    const confirmationKeywords = /\b(yes|yeah|sure|okay|ok|go ahead|do it|sounds good|let's do it|please|absolutely)\b/i.test(lowerMessage);
+    const providedMoreDetails = (jobSearchIntent === 'actively_searching' || jobSearchIntent === 'curious') && 
+                                (hasRole || hasLocation || hasSalary || hasExperience);
+    
+    const shouldTriggerSearch = (hasActiveIntent && hasMinimumInfo) || // Immediate search if user asks with details
+                                (confirmationKeywords && jobSearchIntent === 'actively_searching' && hasMinimumInfo) || // User confirms AND we have info
+                                (providedMoreDetails && hasMinimumInfo); // User provided details AND we have minimum info now
     
     console.log('🔍 Message:', messageToSend);
     console.log('🔍 Job search intent:', jobSearchIntent);
-    console.log('🔍 Has gathered details?', hasGatheredJobDetails);
+    console.log('🔍 Has role?', hasRole, '| Has location?', hasLocation);
+    console.log('🔍 Has salary?', hasSalary, '| Has experience?', hasExperience);
+    console.log('🔍 Has minimum info?', hasMinimumInfo, '| Has good info?', hasGoodInfo);
+    console.log('🔍 Confirmation?', confirmationKeywords, '| Provided details?', providedMoreDetails);
     console.log('🔍 Should trigger search?', shouldTriggerSearch);
 
     if (shouldTriggerSearch) {
@@ -1206,12 +1226,20 @@ INSTRUCTIONS:
         setJobSearchMode(false);
         setJobSearchPrompt('');
       }
+      
+      // Show "I'm searching..." message immediately
+      const searchingMessage = `Perfect! I'm searching for ${hasRole ? 'the best' : ''} opportunities for you right now... 🔍`;
+      setMessages((prev: Message[]) => [...prev, { 
+        role: 'assistant', 
+        content: searchingMessage
+      }]);
+      
       try {
         // Show job search animation
         setIsSearchingJobs(true);
         
         // Safety timeout to ensure animation doesn't get stuck
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           setIsSearchingJobs(false);
         }, 15000); // 15 second timeout
         
@@ -1219,6 +1247,10 @@ INSTRUCTIONS:
         console.log('🔍 Starting job search with webSearchService for query:', searchQuery);
         console.log('👤 Using job profile:', jobProfile);
         const jobResults = await webSearchService.searchJobs(searchQuery, jobProfile || undefined);
+        
+        // Clear timeout since search completed
+        clearTimeout(timeoutId);
+        setIsSearchingJobs(false);
         
         if (jobResults && jobResults.length > 0) {
           console.log('✅ Found', jobResults.length, 'job results');
@@ -1228,21 +1260,37 @@ INSTRUCTIONS:
           setShowJobResults(true); // Enable job results display
           console.log('🔧 DEBUG: Job results state should now be visible');
           
-          // Create enhanced AI response with job details
-          const responseText = `I found ${jobResults.length} relevant job opportunities for you! The top match is "${jobResults[0].title}" at ${jobResults[0].company}${jobResults[0].salary ? ` with salary ${jobResults[0].salary}` : ''}. Check out all the opportunities above!`;
+          // Create enhanced AI response with job details - more conversational
+          const isAutoTriggered = !hasActiveIntent; // Auto-triggered if user didn't explicitly ask
+          const responseText = isAutoTriggered 
+            ? `Excellent! I found ${jobResults.length} outstanding ${hasRole ? 'opportunities' : 'job openings'} that match what you're looking for! 🎯\n\nTop match: **${jobResults[0].title}** at **${jobResults[0].company}**${jobResults[0].salary ? ` • Salary: ${jobResults[0].salary}` : ''}\n\nScroll up to see all ${jobResults.length} opportunities in the job carousel!`
+            : `Great news! I found ${jobResults.length} relevant job opportunities for you! 🚀\n\nTop match: **${jobResults[0].title}** at **${jobResults[0].company}**${jobResults[0].salary ? ` • Salary: ${jobResults[0].salary}` : ''}\n\nCheck out all ${jobResults.length} positions in the job carousel above!`;
           
-          // Add AI response to chat
-          setMessages((prev: Message[]) => [...prev, { 
-            role: 'assistant', 
-            content: responseText
-          }]);
+          // Replace the "searching" message with results
+          setMessages((prev: Message[]) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              role: 'assistant',
+              content: responseText
+            };
+            return updated;
+          });
+          
+          // Reset intent after successful search
+          setJobSearchIntent('none');
+          
+          // Return empty string since we already added the message
+          return '';
         } else {
           console.log('⚠️ No job results found, falling back to regular job search');
+          setIsSearchingJobs(false);
           // Fallback to regular job search if no results found
           await handleJobSearch(searchQuery);
+          return '';
         }
       } catch (error) {
         console.error('❌ WebSearchService failed:', error);
+        setIsSearchingJobs(false);
         
         // Provide user-friendly error message - emphasize the working backup system
         let errorMessage = '🔍 Searching for jobs using your resume profile! This personalized search analyzes your background for the best matches.';
@@ -1261,10 +1309,16 @@ INSTRUCTIONS:
         }
         
         console.log('📝 Showing user-friendly error message:', errorMessage);
-        setMessages((prev: Message[]) => [...prev, { 
-          role: 'assistant', 
-          content: errorMessage
-        }]);
+        
+        // Replace the "searching" message with error message
+        setMessages((prev: Message[]) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: 'assistant',
+            content: errorMessage
+          };
+          return updated;
+        });
         
         // Still attempt fallback to regular job search
         try {
@@ -1272,8 +1326,8 @@ INSTRUCTIONS:
         } catch (fallbackError) {
           console.error('❌ Fallback job search also failed:', fallbackError);
         }
-      } finally {
-        setIsSearchingJobs(false); // Hide job search animation
+        
+        return '';
       }
     } else {
       // Regular AI conversation - build context from previous messages

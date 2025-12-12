@@ -1,4 +1,7 @@
 {
+  "buildCommand": "cd everon-final_001 && npm install && npm run build",
+  "outputDirectory": "everon-final_001/dist",
+  "installCommand": "cd everon-final_001 && npm install",
   "rewrites": [
     {
       "source": "/((?!api|assets|favicon|manifest|sw\\.js).*)",
