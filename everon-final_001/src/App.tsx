@@ -43,12 +43,10 @@ ANALYZE THE ABOVE RESUME CONTENT - DO NOT ASK FOR MORE INFORMATION.`;
     { role: "user", content: resumePrompt }
   ];
 
-  const apiKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_OPENAI_API_KEY : '';
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch("/api/chat-completion", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: "gpt-4o",

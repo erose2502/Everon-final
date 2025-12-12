@@ -52,11 +52,10 @@ class TTSService {
         const voice = this.getVoiceForLanguage(language);
 
         // Use OpenAI TTS API for high-quality voice
-        const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        const response = await fetch('/api/tts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_OPENAI_API_KEY : ''}`,
           },
           body: JSON.stringify({
             model: 'tts-1-hd', // High-quality model

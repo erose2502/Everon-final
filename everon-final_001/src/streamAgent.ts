@@ -2,11 +2,10 @@ export async function streamOpenAIAgent(
   prompt: string,
   onToken: (token: string) => void
 ) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('/api/chat-completion', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_OPENAI_API_KEY : ''}`,
     },
     body: JSON.stringify({
       model: 'gpt-4',
